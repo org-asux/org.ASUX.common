@@ -43,6 +43,7 @@ import static org.junit.Assert.*;
 
 
 /** A smarter iterator class, that is 2-in-1.
+ *  @param <T> the parameter of the class, typically java.lang.String or org.ASUX.Tuple
  *  It's both an array and iterator, especially an iterator that can provide the current 'index' to the underlying array.
  */
 public class ArrayWithIterator<T> implements java.util.Iterator, java.io.Serializable {
@@ -74,9 +75,23 @@ public class ArrayWithIterator<T> implements java.util.Iterator, java.io.Seriali
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //=======================================================================
 
-    /** <p>Rudimentary Constructor.  Takes an object that is compatible with Arrays
+    /** Rudimentary Constructor.  Takes an object that is compatible with Arrays
+     *  @param _array a basic java immutable Array
+     */
+    public ArrayWithIterator( final T[] _array ) {
+        this( false, _array );
+    }
+
+    /** Rudimentary Constructor.  Takes an object that is compatible with the java.util.AbstractCollection interface (example: LinkedList, ArrayList, HashSet)
+     *  @param _coll an object that implements the java.util.AbstractCollection interface (example: LinkedList, ArrayList, HashSet)
+     */
+    public ArrayWithIterator( final java.util.AbstractCollection<T> _coll ) {
+        this( false, _coll );
+    }
+
+    /** Rudimentary Constructor.  Takes an object that is compatible with Arrays
      *  @param _verbose Whether you want deluge of debug-output onto System.out
-     *  @ thr ows org.ASUX.yaml.ArrayWithIterator.ArrayWithIteratorException 
+     *  @param _array a basic java immutable Array
      */
     public ArrayWithIterator( final boolean _verbose, final T[] _array )
                 // throws ArrayWithIteratorException
@@ -87,17 +102,16 @@ public class ArrayWithIterator<T> implements java.util.Iterator, java.io.Seriali
         this.indexPtr = (this.arraylist.length > 0) ? 0 : -1;
     } // Constructor
 
-    /** <p>Rudimentary Constructor.  Takes an object that is compatible with Arrays
+    /** Rudimentary Constructor.  Takes an object that is compatible with Arrays
      *  @param _verbose Whether you want deluge of debug-output onto System.out
-     *  @ thr ows org.ASUX.yaml.ArrayWithIterator.ArrayWithIteratorException 
+     *  @param _coll an object that implements the java.util.AbstractCollection interface (example: LinkedList, ArrayList, HashSet)
      */
     public ArrayWithIterator( final boolean _verbose, final java.util.AbstractCollection<T> _coll )
                 // throws ArrayWithIteratorException
     {
-        this.verbose = _verbose;
-        @SuppressWarnings("unchecked")
-        final T[] a = (T[]) _coll.toArray();
-        this.arraylist = a;
+        this( _verbose, constructorUtil( _coll ) );
+        // @SuppressWarnings("unchecked")
+        // final T[] a = (T[]) _coll.toArray( this.arraylist );
         // if ( _coll.size() > 0 ) {
         //     final Iterator<T> itr = _coll.iterator();
         //     while ( itr.hasNext ) {}
@@ -108,9 +122,16 @@ public class ArrayWithIterator<T> implements java.util.Iterator, java.io.Seriali
         //         this.arraylist[ i ] = entry;
         //     }
         // }
-        this.isValid = (this.arraylist.length > 0) ? true : false;
-        this.indexPtr = (this.arraylist.length > 0) ? 0 : -1;
+        // this( _verbose, a );
     } // Constructor
+
+    private static <T> T[] constructorUtil ( final java.util.AbstractCollection<T> _coll ) {
+        @SuppressWarnings("unchecked")
+        final T[] a = (T[]) _coll.toArray(); // this step is just to get a non-null object of type T[] - just to get around compiler's errors.
+                    // as long we do NOT access anything within 'a' we should be without ANY runtime exceptions
+        final T[] b = (T[]) _coll.toArray( a ); // this statement guarantees compiler-wise and runtime-wise, that no exception will be thrown.
+        return b;
+    }
 
     //=======================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -161,6 +182,8 @@ public class ArrayWithIterator<T> implements java.util.Iterator, java.io.Seriali
 
     /** This is Not part of java.util.Iterator, but am providing it to handle boundary-scenarios much better than having NullPointerExceptions much later in running code.
      *  @return the object at the next location in the array
+     *  @throws ArrayWithIteratorException if this variant of next()-method is called without checking hasNext().  No other reason to throw this specific exception.
+     *  @throws IndexOutOfBoundsException shouldn't happen, unless a defect within this code base for ArrayWithIterator class.
      */
     public T next_throws() throws ArrayWithIteratorException, IndexOutOfBoundsException {
 //        String retstr = null;
@@ -199,6 +222,7 @@ public class ArrayWithIterator<T> implements java.util.Iterator, java.io.Seriali
 
     /** Return the element pointed to by the current index {@link #index} inside the array stored internally.
      *  @return a string that does NOT have periods/dots/delimiter in it.  The string may be (based on example above) = "*".
+     *  @throws IndexOutOfBoundsException If you invoke this after hasNext() returns false, you'll get this Exception.  Also, this exception will be throws if this class has bugs.
      */
     public T get() throws IndexOutOfBoundsException {
         if ( ! this.isValid ) return null;
@@ -319,9 +343,10 @@ public class ArrayWithIterator<T> implements java.util.Iterator, java.io.Seriali
 
 
     /** This deepClone function is unnecessary, if you can invoke org.apache.commons.lang3.SerializationUtils.clone(this)
+     *  @param <E> Since this method is static, it has a separate naming convention 'E'.  But it should be the same class 'T' as used in constructor.
      *  @param _orig what you want to deep-clone
      *  @return a deep-cloned copy, created by serializing into a ByteArrayOutputStream and reading it back (leveraging ObjectOutputStream)
-     *  throws Exception if there is any trouble in cloning.  Example: whether the object being cloned does NOT implement the java.io.Serializable, or CLASSPATH does Not have the class-definition, etc..
+     *  @throws Exception if there is any trouble in cloning.  Example: whether the object being cloned does NOT implement the java.io.Serializable, or CLASSPATH does Not have the class-definition, etc..
      */
     public static <E> ArrayWithIterator<E> deepClone(ArrayWithIterator<E> _orig) throws Exception {
         @SuppressWarnings("unchecked")
