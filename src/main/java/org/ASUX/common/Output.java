@@ -164,7 +164,7 @@ public class Output {
             this.kvPair = _kv;
         }
 
-        public void getMap( final LinkedHashMap<String,java.lang.Object> _m ) {
+        public void setMap( final LinkedHashMap<String,java.lang.Object> _m ) {
             setType( OutputType.Type_LinkedHashMap );
             this.map = _m;
         }
