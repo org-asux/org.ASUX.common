@@ -53,7 +53,8 @@ public class Utils {
      *  @return a deep-cloned copy, created by serializing into a ByteArrayOutputStream and reading it back (leveraging ObjectOutputStream)
      *  @throws Exception like ClassNotFoundException while trying to serialize and deserialize the input-parameter
      */
-    public static Object deepClone(Object _orig) throws Exception {
+    public static <T> T deepClone(T _orig) throws Exception {
+        final String errmsg = CLASSNAME + ": ERROR deepCloning object of type "+ _orig.getClass().getName() +" of value=["+ ((_orig==null)?"null":_orig.toString()) +"]";
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -61,14 +62,16 @@ public class Utils {
             
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             ObjectInputStream ois = new ObjectInputStream(bais);
-            return ois.readObject();
+            @SuppressWarnings("unchecked")
+            final T newobj = (T) ois.readObject();
+            return newobj;
         } catch (java.io.IOException e) {
             e.printStackTrace(System.err);
-            System.err.println( CLASSNAME + ": deepCloning object ["+ _orig.toString() +"]" );
+            System.err.println( errmsg );
             throw e;
         } catch (ClassNotFoundException e) {
             e.printStackTrace(System.err);
-            System.err.println( CLASSNAME + ": deepCloning object ["+ _orig.toString() +"]" );
+            System.err.println( errmsg );
             throw e;
         }
     }
