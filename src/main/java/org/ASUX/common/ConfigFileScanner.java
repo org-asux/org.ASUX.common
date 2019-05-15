@@ -376,7 +376,10 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     // For unit-testing purposes only
     public static void main(String[] args) {
         class TestConfigFileScanner extends ConfigFileScanner {
-            public TestConfigFileScanner(boolean _verbose) { super(_verbose); }
+            private static final long serialVersionUID = 1L;
+            public TestConfigFileScanner(boolean _verbose) {
+                super(_verbose);
+            }
             protected void resetFlagsForEachLine() {}
         };
         try {
