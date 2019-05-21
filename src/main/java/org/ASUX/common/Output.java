@@ -169,7 +169,32 @@ public class Output {
             this.map = _m;
         }
 
-    }
+        //------------------------------------------------------------------------------
+        /**
+         * Use this method when you do NOT care what is inside this org.ASUX.common.Output.Object instance.
+         * Ideally suited to pass this on to YAML-Libraries - specifically for that library to then write it to a file.
+         * @return java.lang.Object
+         * @throws ASUXException should Not be thrown (semantically robust due to Switch-statement implementation internally), but Java compiler requires I note that this specific exception can happen 
+         * @throws Exception this method will throw this, if this org.ASUX.common.Output.Object has Not been initialized yet
+         */
+        public java.lang.Object getJavaObject() throws ASUXException, Exception {
+            // if (this.verbose) System.out.println( CLASSNAME +": getJavaObject(): type= ["+ this.type +"]" );
+
+            // for the following SWITCH-statement, keep an eye on Output.OutputType
+            switch( this.type ) {
+                case Type_ArrayList:    return this.getArray();
+                case Type_LinkedList:   return this.getList();
+                case Type_KVPairs:      return this.getMap();
+                case Type_LinkedHashMap:    return this.getMap();
+                case Type_String:       return this.getString();
+                case Type_KVPair:       return this.getKVPair();
+                case Type_Unknown:
+                default:
+                    throw new Exception( CLASSNAME + ": getJavaObject(): Serious INTERNAL-ERROR .. more likely you invoked .getJavaObject() method on an UNInitialized object)!!!" );
+            } // switch
+        } // method: getJavaObject
+
+    } // Output.Object class definition
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
