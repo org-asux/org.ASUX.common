@@ -49,6 +49,7 @@ public class Utils {
     //==============================================================================
 
     /** This deepClone function is unnecessary, if you can invoke org.apache.commons.lang3.SerializationUtils.clone(this)
+     *  @param <T> any class that implements java.io.Streamable interface
      *  @param _orig what you want to deep-clone
      *  @return a deep-cloned copy, created by serializing into a ByteArrayOutputStream and reading it back (leveraging ObjectOutputStream)
      *  @throws Exception like ClassNotFoundException while trying to serialize and deserialize the input-parameter
