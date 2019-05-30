@@ -45,12 +45,12 @@ public class GenericProgramming {
     public static final String CLASSNAME = GenericProgramming.class.getName();
     
     /**
-     * <p>Stop using this for Java1.6 & Higher -- use http://sourceforge.net/projects/privaccessor </p>
+     * <p>Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor </p>
      * 
      * <p>Invoke  "obj.getFldnm()" for field whose name is "fldnm".</p>
-     * <p>If you wanna access the field directly using Reflection, use {@link GenericProgramming.getAnyField} </p>
-     * @param obj
-     * @param fldnm
+     * <p>If you wanna access the field directly using Reflection, use {@link #getAnyField} </p>
+     * @param obj Any java object
+     * @param fldnm a valid fieldname [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid fieldname)
      * @return the return value of the getter method.
      */
     public static Object fetchFieldValueUsingGetter( final Object obj ,final String fldnm )
@@ -67,11 +67,11 @@ public class GenericProgramming {
     
     
     /**
-     * <p>Stop using this for Java1.6 & Higher -- use http://sourceforge.net/projects/privaccessor</p>
+     * <p>Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor</p>
      * 
      * <p>Invoke  "obj.methodName()" which takes no parameters.</p>
-     * @param obj
-     * @param methodName
+     * @param obj an instance of ANY class that has a method to be invoked
+     * @param methodName a valid methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
      * @return the return value of the getter method.
      */
     public static Object invokeMethod( final Object obj ,final String methodName )
@@ -82,13 +82,13 @@ public class GenericProgramming {
     }
 
     /**
-     * <p>Stop using this for Java1.6 & Higher -- use http://sourceforge.net/projects/privaccessor</p>
+     * <p>Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor</p>
      * 
      * <p>Invoke  "obj.methodName(parameters)" where parameters have respective types listed in "parameterTypes".</p>
-     * <p>This method does NOT do any checking to see if the # of parameters passed (as args 3 & 4) for "methodName"
+     * <p>This method does NOT do any checking to see if the # of parameters passed (as args 3 and 4) for "methodName"
      * 		are the right set (i.e., whether such a signature exists).</p>
-     * @param obj an instance of a class that has a method to be invoked
-	 * @param methodName the static method to invoke
+     * @param obj an instance of ANY class that has a method to be invoked
+     * @param methodName a valid methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
      * @param parameterTypes - - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
      * @param parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
      * @return the return value of the getter method.
@@ -134,30 +134,30 @@ public class GenericProgramming {
 
 
     /**
-     * <p>Stop using this for Java1.6 & Higher -- use http://sourceforge.net/projects/privaccessor</p>
+     * <p>Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor</p>
      * 
      * <p>Invoke  "obj.methodName(parameters)" where parameters have respective types listed in "parameterTypes".</p>
-     * <p>This method DOES CHECK to see if the # of parameters passed (as args 3 & 4) for "methodName"
+     * <p>This method DOES CHECK to see if the # of parameters passed (as args 3 and 4) for "methodName"
      * 		are the right set (i.e., whether such a signature exists).</p>
      * <p>That is the primary difference between this and the above polymorphic variation.</p>
      * <p>The suffix '_DbC' refers to Bertrand Meyer's DesignByContract.</p>
-     * @param obj an instance of a class that has a method to be invoked
-	 * @param methodName the static method to invoke
+     * @param obj an instance of ANY class that has a method to be invoked
+     * @param staticMethodName a valid STATIC methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
      * @param parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
      * @param parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
      * @param verboseLevel 0 for no output at all, and all +ve numbers show output.
      * @return the return value of the getter method.
      */
     public static Object invokeMethod_DbC( final Object obj
-            ,final String methodName
+            ,final String staticMethodName
             ,final Class<?>[] parameterTypes
             ,final Object[] parameters
             ,final int verboseLevel )
     {
-        if ( obj == null || methodName == null )
+        if ( obj == null || staticMethodName == null )
             return null;
 
-        final String HDR="invokeMethodOnStub("+obj.getClass().getName()+", "+methodName+", parameters[], "+verboseLevel+") : ";
+        final String HDR="invokeMethodOnStub("+obj.getClass().getName()+", "+staticMethodName+", parameters[], "+verboseLevel+") : ";
 
         Method method = null;
         boolean found = false;
@@ -165,8 +165,8 @@ public class GenericProgramming {
         for( int ix=0;  ix < mthds.length; ix ++ ) {
             method = mthds[ix];
             if( verboseLevel >= 1 )
-                System.out.println("\t'"+methodName+"' =?= '"+method.getName()+"' :: "+method);
-            if ( method.getName().equals(methodName)) {
+                System.out.println("\t'"+staticMethodName+"' =?= '"+method.getName()+"' :: "+method);
+            if ( method.getName().equals(staticMethodName)) {
                 final Class<?>[] prmtrTypes = method.getParameterTypes();
                 if ( prmtrTypes.length != parameterTypes.length ) {
                     if( verboseLevel >= 1 )
@@ -190,7 +190,7 @@ public class GenericProgramming {
 
         if ( ! found )
         {   System.err.println(HDR+"No method "+obj.getClass().getName()+"."
-                +methodName+"() found.");
+                +staticMethodName+"() found.");
             return null;
         }
         
@@ -200,11 +200,11 @@ public class GenericProgramming {
     } // End invokeMethod()
 
     /**
-     * Stop using this for Java1.6 & Higher -- use http://sourceforge.net/projects/privaccessor
+     * Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor
      * 
      * Invoke  "obj.methodName(parameters)"
-     * @param obj an instance of a class that has a method to be invoked
-	 * @param methodName the static method to invoke
+     * @param obj an instance of ANY class that has a method to be invoked
+     * @param method a valid methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
      * @param parameters - eg: new Class[] prms = new String[]{ "value" };
      * @return the return value of the getter method.
      */
@@ -221,7 +221,7 @@ public class GenericProgramming {
         try
         {
             // isAccessible is deprecated since Java 9
-            // For Java 9 & 10.. use:-
+            // For Java 9 and 10.. use:-
             //      Class java.lang.reflect.AccessibleObject
             //      public final boolean canAccess​(Object obj)
 			if ( ! method.isAccessible() ) {
@@ -253,11 +253,11 @@ public class GenericProgramming {
 	} // End invokeMethod()
 
 	/**
-     * Stop using this for Java1.6 & Higher -- use http://sourceforge.net/projects/privaccessor
+     * Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor
      * 
 	 * Provides access to EVEN PRIVATE members in classes.
-     * @param o
-     * @param fieldName
+     * @param o an instance of ANY class that has a method to be invoked
+     * @param fieldName a valid fieldname [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid fieldname)
      * @return the return value of the field (whether public or private field).
 	 */
 	public static Object getAnyField (final Object o, final String fieldName) {
@@ -269,7 +269,7 @@ public class GenericProgramming {
 		try {
 			final Field field = o.getClass().getDeclaredField(fieldName);
             // isAccessible is deprecated since Java 9
-            // For Java 9 & 10.. use:-
+            // For Java 9 and 10.. use:-
             //      Class java.lang.reflect.AccessibleObject
             //      public final boolean canAccess​(Object obj)
 			if ( ! field.isAccessible() ) {
@@ -305,7 +305,7 @@ public class GenericProgramming {
 	/**
 	 * Given a specific class, and a **STATIC** method of that class, it will invoke it.
 	 * @param userClass the class.getName() that has a static method to invoke
-	 * @param methodName the static method to invoke
+     * @param methodName a valid methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
 	 * @param parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
 	 * @param parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
 	 * @return The value returned by the method.  Null return value means something went wrong, even the method invocation was successful without exceptions.
@@ -357,9 +357,8 @@ public class GenericProgramming {
 	/**
 	 * Given a specific class, and a **STATIC** method of that class, return the method, if it exists and is static (But no accessibility checks)
 	 * @param userClass the class.getName() that has a static method to invoke
-	 * @param methodName the static method to invoke
+     * @param methodName a valid methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
 	 * @param parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
-	 * @param parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
 	 * @return The method object itself, if it exists and is static (But no accessibility checks)
 	 */
 	public static Method getStaticMethod( 
