@@ -55,7 +55,7 @@ public class Utils {
      *  @throws Exception like ClassNotFoundException while trying to serialize and deserialize the input-parameter
      */
     public static <T> T deepClone(T _orig) throws Exception {
-        final String errmsg = CLASSNAME + ": ERROR deepCloning object of type "+ _orig.getClass().getName() +" of value=["+ ((_orig==null)?"null":_orig.toString()) +"]";
+        final String errmsg = CLASSNAME + ": deepClone(): ERROR deepCloning object of type "+ _orig.getClass().getName() +" of value=["+ ((_orig==null)?"null":_orig.toString()) +"]";
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -66,13 +66,13 @@ public class Utils {
             @SuppressWarnings("unchecked")
             final T newobj = (T) ois.readObject();
             return newobj;
-        } catch (java.io.IOException e) {
-            e.printStackTrace(System.err);
-            System.err.println( errmsg );
-            throw e;
         } catch (ClassNotFoundException e) {
-            e.printStackTrace(System.err);
-            System.err.println( errmsg );
+            e.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this method
+            System.err.println( errmsg +"\n"+ e );
+            throw e;
+        } catch (java.io.IOException e) {
+            e.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this method
+            System.err.println( errmsg +"\n"+ e );
             throw e;
         }
     }
