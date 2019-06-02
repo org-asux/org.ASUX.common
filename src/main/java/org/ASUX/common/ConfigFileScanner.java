@@ -50,17 +50,17 @@ import java.io.ObjectInputStream;
 public abstract class ConfigFileScanner implements java.io.Serializable {
 
     private static final long serialVersionUID = 110L;
-    public static final String CLASSNAME = "org.ASUX.common.ConfigFileScanner";
+    public static final String CLASSNAME = ConfigFileScanner.class.getName();
 
     //--------------------------------------------------------
     protected final boolean verbose;
 
-    private String fileName = null;
+    protected String fileName = null;
     protected ArrayList<String> lines; // = new ArrayList<>();
-    private ArrayList<Integer> origLineNumbers; //  = new ArrayList<>();
+    protected ArrayList<Integer> origLineNumbers; //  = new ArrayList<>();
 
-    private transient Iterator<String> iterator = null;  // <<- transient class variable.  Will not be part of deepClone() method.
-    private int currentLineNum = -1;
+    protected transient Iterator<String> iterator = null;  // <<- transient class variable.  Will not be part of deepClone() method.
+    protected int currentLineNum = -1;
 
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -120,7 +120,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         }
     }
 
-        /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine().  But this method is a special deviation, as it allows us to get the 'current-line' over-n-over again.
+    /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine().  But this method is a special deviation, as it allows us to get the 'current-line' over-n-over again.
      *  @return either null (graceful failure) or the next string in the list of lines
      */
     public String currentLineOrNull() {
@@ -168,8 +168,14 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     public String getState() {
         if ( this.fileName == null || this.currentLineNum <= 0 )
             return "ConfigFile ["+ this.fileName +"] is in invalid state";
-        else
-            return "ConfigFile=["+ this.fileName +"] @ line# "+ this.origLineNumbers.get(this.currentLineNum - 1) +" = ["+ this.currentLineOrNull() +"]";
+        else {
+            final String s = "@ line# "+ this.origLineNumbers.get(this.currentLineNum - 1) +" = ["+ this.currentLineOrNull() +"]";
+            if ( this.fileName.startsWith("@") ) {
+                return "File-name: '"+ this.fileName.substring(1) +"' "+ s;
+            } else {
+                return "inline-content provided: '"+ this.fileName +"' "+ s;
+            }
+        }
     }
 
     //===========================================================================
@@ -188,34 +194,38 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
     //===========================================================================
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
-     *  @return either null (graceful failure) or the next string in the list of lines
+     *  @return 0.0001% chance (a.k.a. code bugs) that this is null. Returns the next string in the list of lines
      *  @throws Exception in case this class is messed up or hasNextLine() is false or has Not been invoked appropriately
      */
-    public String nextLine() throws Exception {
+    public String nextLine() throws Exception
+    {
+        final String HDR = CLASSNAME +": nextLine(): ";
         if ( this.hasNextLine() ) {
             this.iterator.next();
             this.currentLineNum ++;
             resetFlagsForEachLine(); // so that the isXXX() methods invoked of this class -- now that we're on NEW/NEXT line -- will NOT take a shortcut!
 
-            if ( this.verbose ) System.out.println( CLASSNAME +": nextLine(): \t" + this.getState() );
+            if ( this.verbose ) System.out.println( HDR +"\t" + this.getState() );
             return this.lines.get ( this.currentLineNum - 1 );
         } else {
             this.currentLineNum = -1;
             // WARNING: Do not invoke this.rewind() or this.reset().  It will INCORRECTLY change the value of this.iterator
-            throw new Exception( CLASSNAME +": nextLine(): hasNextLine() is false! CurrentLineNum=" +this.currentLineNum +".  Debug-details: state="+ this.getState() );
+            throw new Exception( HDR +" hasNextLine() is false! CurrentLineNum=" +this.currentLineNum +".  Debug-details: state="+ this.getState() );
         }
     }
 
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine() - but will return null if any errors or invalid sequence of method invocations
      *  @return either null (graceful failure) or the next string in the list of lines
      */
-    public String nextLineOrNull() {
+    public String nextLineOrNull()
+    {
+        final String HDR = CLASSNAME +": nextLineOrNull(): ";
         if ( this.hasNextLine() ) {
             this.iterator.next();
             this.currentLineNum ++;
             resetFlagsForEachLine(); // so that the isXXX() methods invoked of this class -- now that we're on NEW/NEXT line -- will NOT take a shortcut!
 
-            if ( this.verbose ) System.out.println( CLASSNAME +": nextLine(): \t " + this.getState() );
+            if ( this.verbose ) System.out.println( HDR +"\t " + this.getState() );
             return this.lines.get ( this.currentLineNum - 1 );
         } else {
             this.currentLineNum = -1;
@@ -236,8 +246,9 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      *  @return true (successful and NO errors) or false (any error or issue/trouble whatsoever)
      *  @throws java.lang.Exception either this function throws or will return false.
      */
-    public boolean openFile( final String _filename, final boolean _ok2TrimWhiteSpace, final boolean _bCompressWhiteSpace ) throws Exception {
-
+    public boolean openFile( final String _filename, final boolean _ok2TrimWhiteSpace, final boolean _bCompressWhiteSpace ) throws Exception
+    {
+        final String HDR = CLASSNAME +": openFile("+ _filename +","+ _ok2TrimWhiteSpace +","+ _bCompressWhiteSpace +"): ";
         this.reset(); // just in case.
         this.fileName = _filename;
 
@@ -251,7 +262,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
                 scanner = new java.util.Scanner( this.fileName ); // what I thought was filename is actually INLINE-CONTENT to parse
             }
 
-            if ( this.verbose ) System.out.println( CLASSNAME + ": openFile(): successfully opened file [" + this.fileName +"]" );
+            if ( this.verbose ) System.out.println( HDR +"successfully opened file [" + this.fileName +"]" );
 
             // different way to detect comments, and to remove them.
 			Pattern emptyPattern        = Pattern.compile( "^\\s*$" ); // empty line
@@ -271,7 +282,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
                 if ( _bCompressWhiteSpace ) {
                     line = line.replaceAll("\\s\\s+", " ");
                 }
-                if ( this.verbose ) System.out.println( CLASSNAME + ": openFile(): AS-IS line=[" + line +"]" );
+                if ( this.verbose ) System.out.println( HDR +"AS-IS line=[" + line +"]" );
 
                 Matcher emptyMatcher = emptyPattern.matcher( line );
                 if ( emptyMatcher.matches() ) continue;
@@ -286,13 +297,13 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
                 // if we are here, then the line does ___NOT___ start with # or.. // or --
                 Matcher hashMatcher     = hashPattern.matcher( line );
                 if (hashMatcher.find()) {
-                    if ( this.verbose ) System.out.println( CLASSNAME +": openFile(): I found the text "+ hashMatcher.group() +" starting at index "+  hashMatcher.start()+ " and ending at index "+ hashMatcher.end() );    
+                    if ( this.verbose ) System.out.println( HDR +"I found the text "+ hashMatcher.group() +" starting at index "+  hashMatcher.start()+ " and ending at index "+ hashMatcher.end() );    
                     line = line.substring( 0, hashMatcher.start() );
                     if ( _ok2TrimWhiteSpace ) line = line.trim(); // trim both leading and trailing whitespace
                 }
                 Matcher slashMatcher    = slashPattern.matcher( line );
                 if (slashMatcher.find()) {
-                    if ( this.verbose ) System.out.println( CLASSNAME +": openFile(): I found the text "+ slashMatcher.group() +" starting at index "+  slashMatcher.start() +" and ending at index "+ slashMatcher.end() );    
+                    if ( this.verbose ) System.out.println( HDR +"I found the text "+ slashMatcher.group() +" starting at index "+  slashMatcher.start() +" and ending at index "+ slashMatcher.end() );    
                     line = line.substring( 0, slashMatcher.start() );
                     if ( _ok2TrimWhiteSpace ) line = line.trim(); // trim both leading and trailing whitespace
                 }
@@ -303,7 +314,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
                 //---------------------------
                 if ( _ok2TrimWhiteSpace ) line = line.trim(); // trim both leading and trailing whitespace
-                if ( this.verbose ) System.out.println( CLASSNAME + ": openFile(): TRIMMED line=[" + line +"]" );
+                if ( this.verbose ) System.out.println( HDR +" TRIMMED line=[" + line +"]" );
 
                 //---------------------------
                 // nonEmptyCmdLinenum ++;
@@ -321,15 +332,16 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         // scanner.next() only throws a RUNTIMEEXCEPTION: NoSuchElementException - if no more tokens are available
 
 		} catch (PatternSyntaxException e) {
-			e.printStackTrace(System.err);
-			System.err.println(CLASSNAME + ": openFile(): Unexpected Internal ERROR, while checking for patterns for line= [" + line +"]" );
+			e.printStackTrace(System.err); // PatternSyntaxException! too fatal an error, to allow program/application to continue to run.
+			System.err.println( "\n\n"+ HDR +"Unexpected Internal ERROR, while checking for patterns for line= [" + line +"]. Exception Message: "+ e );
 			System.exit(91); // This is a serious failure. Shouldn't be happening.
         } catch (java.io.IOException e) {
-            e.printStackTrace(System.err);
-            System.err.println( CLASSNAME + ": openFile(): \n\nFailure to read/write IO for file ["+ this.fileName +"]" );
+            e.printStackTrace(System.err); // IOException! too fatal an error, to allow program/application to continue to run.
+            System.err.println( "\n\n"+ HDR +"Failure to read/write IO for file ["+ this.fileName +"]. Exception Message: "+ e );
+			System.exit(91); // This is a serious failure. Shouldn't be happening.
         // } catch (Exception e) {
-        //     e.printStackTrace(System.err);
-        //     System.err.println( CLASSNAME + ": openFile(): Unknown Internal error:.");
+        //     e.printStackTrace(System.err);// General Exception! too fatal an error, to allow program/application to continue to run.
+        //     System.err.println( HDR +"Unknown Internal error: "+ e );
         }
         return false;
     }
@@ -338,7 +350,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
-    /** This deepClone function is unnecessary, if you can invoke org.apache.commons.lang3.SerializationUtils.clone(this)
+    /** This deepClone function is unnecessary, as org.apache.commons.lang3.SerializationUtils.clone(this) is unable to handle 'transient' variables in this class.
      *  @param _orig what you want to deep-clone
      *  @return a deep-cloned copy, created by serializing into a ByteArrayOutputStream and reading it back (leveraging ObjectOutputStream)
      */
@@ -361,11 +373,11 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
             return newobj;
 
-        } catch (java.io.IOException e) {
-			e.printStackTrace(System.err);
-            return null;
         } catch (ClassNotFoundException e) {
-			e.printStackTrace(System.err);
+			e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
+            return null;
+        } catch (java.io.IOException e) {
+			e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
             return null;
         }
     }
@@ -390,7 +402,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
                 o.getState();
             }
 		} catch (Exception e) {
-			e.printStackTrace(System.err);
+			e.printStackTrace(System.err); // main().  For Unit testing
 			System.err.println( CLASSNAME + ": main(): Unexpected Internal ERROR, while processing " + ((args==null || args.length<=0)?"[No CmdLine Args":args[0]) +"]" );
 			System.exit(91); // This is a serious failure. Shouldn't be happening.
         }
