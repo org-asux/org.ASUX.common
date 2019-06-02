@@ -110,20 +110,17 @@ public class GenericProgramming {
             method = obj.getClass().getDeclaredMethod(
                     methodName.toString(), parameterTypes );
         }catch(NoSuchMethodException e1){
-            System.err.println(HDR+" getDeclaredMethod("+methodName+") for class '"
-                    +obj.getClass().getName()+"' - NoSuchMethodException: "+e1);
-            e1.printStackTrace(System.err);
+            e1.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" Internal-Error: getDeclaredMethod("+methodName+") for class '"+ obj.getClass().getName() +"' - NoSuchMethodException: "+ e1 );
             return null;
         }catch(SecurityException e2){
-            System.err.println(HDR+" getDeclaredMethod("+methodName+") for class '"
-                    +obj.getClass().getName()+"' - SecurityException: "+e2);
-            e2.printStackTrace(System.err);
+            e2.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" Internal-Error: getDeclaredMethod("+methodName+") for class '"+ obj.getClass().getName() +"' - SecurityException: "+ e2 );
             return null;
         }
         
         if ( method == null )
-        {   System.err.println(HDR+"No method "+obj.getClass().getName()+"."
-                +methodName+"() found.");
+        {   System.err.println( HDR+"No method "+ obj.getClass().getName() +"."+ methodName +"() found.");
             return null;
         }
         
@@ -231,20 +228,20 @@ public class GenericProgramming {
             retobj = method.invoke( obj, parameters );
 
         }catch(IllegalAccessException e1){
-            System.err.println(HDR+" method.invoke(...) IllegalAccessException: "+e1);
-            e1.printStackTrace(System.err);
+            e1.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" method.invoke(...) IllegalAccessException: "+ e1 );
             return null;
         }catch(IllegalArgumentException e2){
-            System.err.println(HDR+" method.invoke(...) IllegalArgumentException: "+e2);
-            e2.printStackTrace(System.err);
+            e2.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" method.invoke(...) IllegalArgumentException: "+ e2 );
             return null;
         }catch(InvocationTargetException e3){
-            System.err.println(HDR+" method.invoke(...) InvocationTargetException: "+e3);
-            e3.printStackTrace(System.err);
+            e3.printStackTrace(System.err);  // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" method.invoke(...) InvocationTargetException: "+ e3 );
             return null;
         }catch(SecurityException e4){
-            System.err.println(HDR+" method.invoke(...) SecurityException: "+e4);
-            e4.printStackTrace(System.err);
+            e4.printStackTrace(System.err);  // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" method.invoke(...) SecurityException: "+ e4 );
             return null;
         }
         
@@ -279,25 +276,24 @@ public class GenericProgramming {
 			return field.get(o);
 
 		}catch(IllegalAccessException e1){
-			System.err.println(HDR+" getAnyField(...) IllegalAccessException: "+e1);
-			e1.printStackTrace(System.err);
+			e1.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+			System.err.println( "\n\n"+ HDR +" getAnyField(...) IllegalAccessException: "+ e1 );
 			return null;
         }catch(IllegalArgumentException e2){
-            System.err.println(HDR+" getAnyField(...) IllegalArgumentException: "+e2);
-            e2.printStackTrace(System.err);
+            e2.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" getAnyField(...) IllegalArgumentException: "+ e2 );
             return null;
 		}catch(NoSuchFieldException e3){
-			System.err.println(HDR+" getAnyField("+fieldName+") for class '"
-					+o.getClass().getName()+"' - NoSuchFieldException: "+e3);
-			e3.printStackTrace(System.err);
+			e3.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+			System.err.println( "\n\n"+ HDR +" getAnyField("+fieldName+") for class '"+ o.getClass().getName() +"' - NoSuchFieldException: "+ e3 );
 			return null;
 		}catch(SecurityException e4){
-			System.err.println(HDR+" method.getAnyField(...) SecurityException: "+e4);
-			e4.printStackTrace(System.err);
+			e4.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+			System.err.println( "\n\n"+ HDR +" method.getAnyField(...) SecurityException: "+ e4 );
 			return null;
         }catch(ExceptionInInitializerError e5){
-            System.err.println(HDR+" getAnyField(...) ExceptionInInitializerError: "+e5);
-            e5.printStackTrace(System.err);
+            e5.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" getAnyField(...) ExceptionInInitializerError: "+ e5 );
             return null;
 		}
     }
@@ -313,7 +309,7 @@ public class GenericProgramming {
 	public static Object invokeStaticMethod( 
 			Class<?> userClass, final String methodName, final Class<?>[] parameterTypes, final Object[] parameters)
 	{
-        final String HDR= CLASSNAME +": invokeStaticMethod("+userClass.getName()+", "+methodName+") : ";
+        final String HDR= CLASSNAME +": invokeStaticMethod("+userClass.getName()+", "+methodName+"): ";
 		Method method2 = null;
 		try {
 		    method2 = userClass.getDeclaredMethod( methodName, parameterTypes );
@@ -321,34 +317,28 @@ public class GenericProgramming {
 		    if ( Modifier.isStatic(method2.getModifiers()) ) {
 		    	return method2.invoke(null, parameters);
 		    }else{
-			    System.err.println(HDR+" STATIC-METHOD getDeclaredMethod("+methodName+") for class '"
-			            +userClass.getName()+"' does NOT exist ");
+			    System.err.println( HDR+" STATIC-METHOD getDeclaredMethod("+ methodName +") for class '"+ userClass.getName() +"' does NOT exist " );
 			    return null;
 		    }
-		}catch(NoSuchMethodException e2){
-            e2.printStackTrace(System.err);
-		    System.err.println(HDR+" STATIC-METHOD getDeclaredMethod("+methodName+") for class '"
-		            +userClass.getName()+"' - NoSuchMethodException: "+e2);
+		}catch(NoSuchMethodException e){
+            e.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+		    System.err.println( "\n\n"+ HDR +" STATIC-METHOD getDeclaredMethod("+ methodName +") for class '" + userClass.getName() +"' - NoSuchMethodException: "+ e );
 		    return null;
 		}catch(SecurityException e2){
-            e2.printStackTrace(System.err);
-		    System.err.println(HDR+" STATIC-METHOD getDeclaredMethod("+methodName+") for class '"
-		            +userClass.getName()+"' - SecurityException: "+e2);
+            e2.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+		    System.err.println( "\n\n"+ HDR +" STATIC-METHOD getDeclaredMethod("+ methodName +") for class '"+ userClass.getName() +"' - SecurityException: "+ e2 );
 		    return null;
-        }catch(IllegalAccessException e2){
-            e2.printStackTrace(System.err);
-            System.err.println(HDR+" STATIC-METHOD getDeclaredMethod("+methodName+") for class '"
-                    +userClass.getName()+"' - IllegalAccessException: "+e2);
+        }catch(IllegalAccessException e3){
+            e3.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" STATIC-METHOD getDeclaredMethod("+ methodName +") for class '"+ userClass.getName() +"' - IllegalAccessException: "+ e3 );
             return null;
-        }catch(IllegalArgumentException e2){
-            e2.printStackTrace(System.err);
-            System.err.println(HDR+" STATIC-METHOD getDeclaredMethod("+methodName+") for class '"
-                    +userClass.getName()+"' - IllegalArgumentException: "+e2);
+        }catch(IllegalArgumentException e4){
+            e4.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" STATIC-METHOD getDeclaredMethod("+ methodName +") for class '"+ userClass.getName() +"' - IllegalArgumentException: "+ e4 );
             return null;
-        }catch(InvocationTargetException e2){
-            e2.printStackTrace(System.err);
-            System.err.println(HDR+" STATIC-METHOD getDeclaredMethod("+methodName+") for class '"
-                    +userClass.getName()+"' - InvocationTargetException: "+e2);
+        }catch(InvocationTargetException e5){
+            e5.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+            System.err.println( "\n\n"+ HDR +" STATIC-METHOD getDeclaredMethod("+ methodName +") for class '"+ userClass.getName() +"' - InvocationTargetException: "+ e5 );
             return null;
 		}
 	}
@@ -361,23 +351,20 @@ public class GenericProgramming {
 	 * @param parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
 	 * @return The method object itself, if it exists and is static (But no accessibility checks)
 	 */
-	public static Method getStaticMethod( 
-			Class<?> userClass, final String methodName, final Class<?>[] parameterTypes)
+	public static Method getStaticMethod(  Class<?> userClass, final String methodName, final Class<?>[] parameterTypes )
 	{
         final String HDR=CLASSNAME +": getStaticMethod("+userClass.getName()+", "+methodName+") : ";
 		Method method3 = null;
 		try{
-		    method3 = userClass.getDeclaredMethod(
-		            methodName, parameterTypes );
+		    method3 = userClass.getDeclaredMethod( methodName, parameterTypes );
 		    // First check to see if the method is a static method of the class...
 		    if ( Modifier.isStatic(method3.getModifiers()) )
 		    	return method3;
 		    else
 		    	return null;
 		}catch(NoSuchMethodException e2){
-            e2.printStackTrace(System.err);
-		    System.err.println(HDR+" STATIC-METHOD getStaticMethod("+methodName+") for class '"
-		            +userClass.getName()+"' - NoSuchMethodException: "+e2);
+            e2.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
+		    System.err.println( "\n\n"+ HDR +" STATIC-METHOD getStaticMethod("+ methodName +") for class '"+ userClass.getName() +"' - NoSuchMethodException: "+ e2 );
 		    return null;
 		}
 	}
