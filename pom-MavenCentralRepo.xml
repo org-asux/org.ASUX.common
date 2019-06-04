@@ -73,18 +73,6 @@
         </repository>
     </distributionManagement>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>software.amazon.awssdk</groupId>
-                <artifactId>bom</artifactId>
-                <version>2.0.0</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <!-- scope>test</scope -->
@@ -120,6 +108,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version> <!-- http://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
 				<configuration>
+                    <!-- release>11</release --> <!-- this 'release' flag is supported by Official JDK11 ONLY -->
                     <source>8</source>
                     <target>8</target>
                     <compilerArgs>
@@ -174,9 +163,9 @@
 
 
                     <!-- If you want to filter these deployment descriptors, then ...
-                     these <containerConfigXML> and <webXml> tags WILL BE COMPLETELY OVERWRITTEN.
-                     Filtered <resource> tags (see example below) are executed AFTER these tags.
-                     -->
+                        these <containerConfigXML> and <webXml> tags WILL BE COMPLETELY OVERWRITTEN.
+                        Filtered <resource> tags (see example below) are executed AFTER these tags.
+                    -->
                     <!-- Only the last containerConfigXML element is effective -->
                     <containerConfigXML>META-INF/${project.groupId}-${project.artifactId}/weblogic.xml</containerConfigXML>
                     <containerConfigXML>src/main/webapp/META-INF/sun-ejb.xml</containerConfigXML>
@@ -219,7 +208,7 @@
             <!-- The Maven GPG plugin is used to sign the components with the following configuration.
              * See https://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/
              *      $ mvn clean deploy -Dgpg.keyname=D99F0F81840303DE293F4796067DA2CF1C7ADC98  -Dgpg.passphrase='Top-Scret$Pass#Phrase'
-             -->
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -238,10 +227,10 @@
             <!-- Performing a Release Deployment with the Maven Release Plugin -->
             <!-- https://central.sonatype.org/pages/apache-maven.html#performing-a-release-deployment-with-the-maven-release-plugin -->
             <!-- you can perform a release deployment to OSSRH with
-                mvn release:clean release:prepare
-             by answering the prompts for versions and tags, followed by
-                mvn release:perform
-             This execution will deploy to OSSRH and release to the Central Repository in one go, thanks to the usage of the Nexus Staging Maven Plugin with autoReleaseAfterClose set to true.
+                    mvn release:clean release:prepare
+                by answering the prompts for versions and tags, followed by
+                    mvn release:perform
+                This execution will deploy to OSSRH and release to the Central Repository in one go, thanks to the usage of the Nexus Staging Maven Plugin with autoReleaseAfterClose set to true.
                 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
