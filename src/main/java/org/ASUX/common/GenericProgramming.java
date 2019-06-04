@@ -81,21 +81,25 @@ public class GenericProgramming {
         return invokeMethod( obj, methodName, noParameterTypes, noParameters );
     }
 
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
+
     /**
      * <p>Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor</p>
      * 
-     * <p>Invoke  "obj.methodName(parameters)" where parameters have respective types listed in "parameterTypes".</p>
+     * <p>Invoke  "obj.methodName(parameters)" where parameters have respective types listed in "_parameterTypes".</p>
      * <p>This method does NOT do any checking to see if the # of parameters passed (as args 3 and 4) for "methodName"
      * 		are the right set (i.e., whether such a signature exists).</p>
      * @param obj an instance of ANY class that has a method to be invoked
      * @param methodName a valid methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
-     * @param parameterTypes - - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
+     * @param _parameterTypes - - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
      * @param parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
      * @return the return value of the getter method.
      */
     public static Object invokeMethod( final Object obj
             ,final String methodName
-            ,final Class<?>[] parameterTypes
+            ,final Class<?>[] _parameterTypes
             ,final Object[] parameters )
     {
         if ( obj == null || methodName == null )
@@ -108,7 +112,7 @@ public class GenericProgramming {
         
         try{
             method = obj.getClass().getDeclaredMethod(
-                    methodName.toString(), parameterTypes );
+                    methodName.toString(), _parameterTypes );
         }catch(NoSuchMethodException e1){
             e1.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this java file.
             System.err.println( "\n\n"+ HDR +" Internal-Error: getDeclaredMethod("+methodName+") for class '"+ obj.getClass().getName() +"' - NoSuchMethodException: "+ e1 );
@@ -129,32 +133,67 @@ public class GenericProgramming {
         
     } // End invokeMethod()
 
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
 
     /**
      * <p>Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor</p>
      * 
-     * <p>Invoke  "obj.methodName(parameters)" where parameters have respective types listed in "parameterTypes".</p>
+     * <p>Invoke  "ClassConstructor(_parameters)" where _parameters have respective types listed in "_parameterTypes".</p>
+     * <p>This method DOES CHECK to see if the # of _parameters passed (as args 3 and 4) for "methodName"
+     * 		are the right set (i.e., whether such a signature exists).</p>
+     * @param _class ANY class that has a constructor that can be invoked
+     * @param _parameterTypes - the list of _parameters TYPES.  Example: new Class[] prms = { String.class };
+     * @param _parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
+     * @return the return value of the getter method.
+     * @throws NoSuchMethodException invalid value sent via 'method'
+     * @throws IllegalAccessException if this Constructor and the underlying constructor is inaccessible (private/protected)
+     * @throws IllegalArgumentException if the number of actual and formal parameters differ; if an unwrapping conversion for primitive arguments fails; or if, after possible unwrapping, a parameter value cannot be converted to the corresponding formal parameter type by a method invocation conversion; if this constructor pertains to an enum type.
+     * @throws InstantiationException unable to instantiate object/class
+     * @throws InvocationTargetException if the underlying constructor throws an exception
+     * @throws ExceptionInInitializerError if the initialization provoked by this method fails.
+     */
+    public static Object invokeConstructor( final Class<?> _class
+                                        ,final Class<?>[] _parameterTypes
+                                        ,final Object[] _parameters )
+                                throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InstantiationException, InvocationTargetException, ExceptionInInitializerError
+    {
+        final String HDR="invokeMethodOnStub("+_class.getName()+", _parameterTypes, _parameters) : ";
+        final java.lang.reflect.Constructor constructor = _class.getConstructor( _parameterTypes ); // will throw NoSuchMethodException
+        return constructor.newInstance( _parameters );        
+
+    } // End invokeConstructor()
+
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
+
+    /**
+     * <p>Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor</p>
+     * 
+     * <p>Invoke  "obj.methodName(_parameters)" where _parameters have respective types listed in "_parameterTypes".</p>
      * <p>This method DOES CHECK to see if the # of parameters passed (as args 3 and 4) for "methodName"
      * 		are the right set (i.e., whether such a signature exists).</p>
      * <p>That is the primary difference between this and the above polymorphic variation.</p>
      * <p>The suffix '_DbC' refers to Bertrand Meyer's DesignByContract.</p>
      * @param obj an instance of ANY class that has a method to be invoked
      * @param staticMethodName a valid STATIC methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
-     * @param parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
-     * @param parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
+     * @param _parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
+     * @param _parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
      * @param verboseLevel 0 for no output at all, and all +ve numbers show output.
      * @return the return value of the getter method.
      */
     public static Object invokeMethod_DbC( final Object obj
             ,final String staticMethodName
-            ,final Class<?>[] parameterTypes
-            ,final Object[] parameters
+            ,final Class<?>[] _parameterTypes
+            ,final Object[] _parameters
             ,final int verboseLevel )
     {
         if ( obj == null || staticMethodName == null )
             return null;
 
-        final String HDR="invokeMethodOnStub("+obj.getClass().getName()+", "+staticMethodName+", parameters[], "+verboseLevel+") : ";
+        final String HDR="invokeMethodOnStub("+obj.getClass().getName()+", "+staticMethodName+", _parameters[], "+verboseLevel+") : ";
 
         Method method = null;
         boolean found = false;
@@ -165,22 +204,22 @@ public class GenericProgramming {
                 System.out.println("\t'"+staticMethodName+"' =?= '"+method.getName()+"' :: "+method);
             if ( method.getName().equals(staticMethodName)) {
                 final Class<?>[] prmtrTypes = method.getParameterTypes();
-                if ( prmtrTypes.length != parameterTypes.length ) {
+                if ( prmtrTypes.length != _parameterTypes.length ) {
                     if( verboseLevel >= 1 )
-                        System.out.println(HDR+"\tparameterTypes.length("+parameterTypes.length+") != prmtrTypes.length("+prmtrTypes.length+")'");
+                        System.out.println(HDR+"\t_parameterTypes.length("+_parameterTypes.length+") != prmtrTypes.length("+prmtrTypes.length+")'");
                     continue;
                 }
                 found = true; // changed to false on first mismatch.
                 for(int iy=0;  iy < prmtrTypes.length; iy++ ) {
                     final Class<?> param = prmtrTypes[iy];
-                    final String pcs = parameterTypes[iy].toString();
+                    final String pcs = _parameterTypes[iy].toString();
                     final String pcs2 = param.toString();
                     if ( verboseLevel >= 1 )
                         System.out.println(HDR+"Comparing types for Parameter #"+iy+" ("+param+"):\t'"+pcs+"' =?= '"+pcs2+"'");
                     if ( ! pcs2.replaceAll("  *","").equals(pcs.replaceAll("  *",""))) {
                         found = false;
                     }
-                } // inner FOR loop over all parameters
+                } // inner FOR loop over all _parameters
             } // if method name found
             if ( found ) break;
         } // outer FOR loop over all methods.
@@ -192,9 +231,13 @@ public class GenericProgramming {
         }
         
         //-------------------
-        return invokeMethod( obj, method, parameters );
+        return invokeMethod( obj, method, _parameters );
         
     } // End invokeMethod()
+
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
 
     /**
      * Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor
@@ -205,9 +248,7 @@ public class GenericProgramming {
      * @param parameters - eg: new Class[] prms = new String[]{ "value" };
      * @return the return value of the getter method.
      */
-    public static Object invokeMethod( final Object obj
-            ,final Method method
-            ,final Object[] parameters)
+    public static Object invokeMethod( final Object obj, final Method method, final Object[] parameters)
     {
         if ( obj == null || method == null )
             return null;
@@ -249,6 +290,9 @@ public class GenericProgramming {
         
 	} // End invokeMethod()
 
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
 	/**
      * Stop using this for Java1.6 and Higher -- use http://sourceforge.net/projects/privaccessor
      * 
@@ -298,21 +342,25 @@ public class GenericProgramming {
 		}
     }
 
-	/**
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
+
+    /**
 	 * Given a specific class, and a **STATIC** method of that class, it will invoke it.
 	 * @param userClass the class.getName() that has a static method to invoke
      * @param methodName a valid methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
-	 * @param parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
+	 * @param _parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
 	 * @param parameters - the list of parameters.  Example: new Class[] prms = new String[]{ "value" };
 	 * @return The value returned by the method.  Null return value means something went wrong, even the method invocation was successful without exceptions.
 	 */
 	public static Object invokeStaticMethod( 
-			Class<?> userClass, final String methodName, final Class<?>[] parameterTypes, final Object[] parameters)
+			Class<?> userClass, final String methodName, final Class<?>[] _parameterTypes, final Object[] parameters)
 	{
         final String HDR= CLASSNAME +": invokeStaticMethod("+userClass.getName()+", "+methodName+"): ";
 		Method method2 = null;
 		try {
-		    method2 = userClass.getDeclaredMethod( methodName, parameterTypes );
+		    method2 = userClass.getDeclaredMethod( methodName, _parameterTypes );
 		    // First check to see if the method is a static method of the class...
 		    if ( Modifier.isStatic(method2.getModifiers()) ) {
 		    	return method2.invoke(null, parameters);
@@ -343,20 +391,23 @@ public class GenericProgramming {
 		}
 	}
 
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
 
 	/**
 	 * Given a specific class, and a **STATIC** method of that class, return the method, if it exists and is static (But no accessibility checks)
 	 * @param userClass the class.getName() that has a static method to invoke
      * @param methodName a valid methodName [a-zA-Z-][0-9a-zA-Z-]+  (This method does not check whether this parameter has a valid methodName)
-	 * @param parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
+	 * @param _parameterTypes - the list of parameters TYPES.  Example: new Class[] prms = { String.class };
 	 * @return The method object itself, if it exists and is static (But no accessibility checks)
 	 */
-	public static Method getStaticMethod(  Class<?> userClass, final String methodName, final Class<?>[] parameterTypes )
+	public static Method getStaticMethod(  Class<?> userClass, final String methodName, final Class<?>[] _parameterTypes )
 	{
         final String HDR=CLASSNAME +": getStaticMethod("+userClass.getName()+", "+methodName+") : ";
 		Method method3 = null;
 		try{
-		    method3 = userClass.getDeclaredMethod( methodName, parameterTypes );
+		    method3 = userClass.getDeclaredMethod( methodName, _parameterTypes );
 		    // First check to see if the method is a static method of the class...
 		    if ( Modifier.isStatic(method3.getModifiers()) )
 		    	return method3;
@@ -368,5 +419,9 @@ public class GenericProgramming {
 		    return null;
 		}
 	}
+
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
 
 }
