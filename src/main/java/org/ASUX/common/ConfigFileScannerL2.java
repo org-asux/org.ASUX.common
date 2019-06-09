@@ -48,30 +48,57 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
 
     private static final long serialVersionUID = 112L;
     public static final String CLASSNAME = ConfigFileScannerL2.class.getName();
-    public static final String REGEXP_ECHO = "^\\s*echo\\s+(\\S.*\\S)\\s*$";
 
-    private boolean bLine2bEchoed = false;
+	public static final String REGEXP_INLINEVALUE = "['\" ${}@%a-zA-Z0-9\\[\\]\\.,:_/-]+";
+	public static final String REGEXP_NAMESUFFIX  =     "[${}@%a-zA-Z0-9\\.,:_/-]+";
+	public static final String REGEXP_NAME = "[a-zA-Z$]" + REGEXP_NAMESUFFIX;
+	public static final String REGEXP_FILENAME = "[a-zA-Z$/\\.]" + REGEXP_NAMESUFFIX;
+	public static final String REGEXP_OBJECT_REFERENCE = "[@!]" + REGEXP_FILENAME;
+
+    public static final String REGEXP_ECHO = "^\\s*echo\\s+(\\S.*\\S)\\s*$";
+    public static final String REGEXP_INCLUDE = "^\\s*include\\s+("+ REGEXP_OBJECT_REFERENCE +")\\s*$";
+
+    protected boolean bLine2bEchoed = false;
+    protected ConfigFileScannerL2 includedFile = null;
 
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     /** <p>The only constructor - public/private/protected</p>
      *  @param _verbose Whether you want deluge of debug-output onto System.out.
      */
-    public ConfigFileScannerL2(boolean _verbose) {
+    public ConfigFileScannerL2( boolean _verbose ) {
         super( _verbose );
         reset();
     }
 
     protected ConfigFileScannerL2() { super(); }
 
+    /**
+     * Since this is an abstract class, parse() line - when it encounters a 'include @filename' - needs to invoke a constructor that creates a 2nd object
+     * @return an object of the subclass of this ConfigFileScannerL2.java
+     */
+    protected abstract ConfigFileScannerL2 create();
+
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
+
+    /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine() and reset().<br>reset() has draconian-implications - as if openConfigFile() was never called!
+     */
+    @Override
+    public void reset() {
+        super.reset();
+        this.bLine2bEchoed = false;
+        this.includedFile = null;
+    }
+
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     /** This function is exclusively for use within the go() - the primary function within this class - to make this very efficient when responding to the many isXXX() methods in this class.
      */
     @Override
     protected void resetFlagsForEachLine() {
+        // super.resetFlagsForEachLine(); <-- this is: protected abstract
         this.bLine2bEchoed = false;
     }
 
@@ -91,45 +118,6 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
-    /** <p>New Method added to this subclass.</p>
-     *  <p>ATTENTION: BE VERY CAREFUL when overriding this method, otherwise you cannot take advantage of 'echo' prefix parsing built-in.
-     *  <p>This method should be called after nextLine().  nextLine() is inherited from the parent {@link org.ASUX.common.ConfigFileScanner}.</p>
-     * @throws Exception This class does NOT.  But .. subclasses may have overridden this method and can throw exception(s).  Example: org.ASUX.yaml.BatchFileGrammer.java
-     */
-    public void parseLine() throws Exception
-    {
-        this.resetFlagsForEachLine();
-        String line = this.currentLineOrNull(); // remember the line is most likely already trimmed.  We need to chop off any 'echo' prefix
-
-        final String HDR = CLASSNAME +": parseLine("+ line +"): ";
-        if ( this.verbose ) System.out.println( HDR + this.getState() );
-
-        if ( line == null )
-            return;
-
-        try {
-            // ATTENTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // This block of code below (echoPattern, echoMatcher, this.bLine2bEchoed) MUST be the very BEGINNNG of this function
-            Pattern echoPattern = Pattern.compile( REGEXP_ECHO );
-            Matcher echoMatcher    = echoPattern.matcher( line );
-            if (echoMatcher.find()) {
-                if ( this.verbose ) System.out.println( HDR +": I found the command to be ECHO-ed '"+ echoMatcher.group(1) +"' starting at index "+  echoMatcher.start() +" and ending at index "+ echoMatcher.end() );    
-                line = echoMatcher.group(1); // line.substring( echoMatcher.start(), echoMatcher.end() );
-                this.bLine2bEchoed = true;
-                if ( this.verbose ) System.out.println( "\t 2nd echoing Line # "+ this.getState() );
-                // fall thru below.. to identify the commands
-            } // if
-        } catch (PatternSyntaxException e) {
-			e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
-			System.err.println( HDR + ": Unexpected Internal ERROR, while checking for pattern ("+ REGEXP_ECHO +")." );
-			System.exit(91); // This is a serious failure. Shouldn't be happening.
-        }
-    }
-
-    //==============================================================================
-    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    //==============================================================================
-
     /** This overrides the method from parent class {@link org.ASUX.common.ConfigFileScanner}
      *  This override is reqired to "parse out" prefixes like 'ecbo'
      *  @return the next string in the list of lines (else an exception is thrown)
@@ -138,6 +126,9 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     @Override
     public String currentLine() throws Exception
     {   // !!!!!!!!!!!!!!!!!!!!!! OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
+        if ( this.includedFile != null )
+            return this.includedFile.currentLine();
+
         if ( this.isLine2bEchoed() ) {
             // return this.nextLine(); // this will Not be null.. just because of the call to hasNextLine() above.
             return getLine_NoEchoPrefix( super.currentLine() );
@@ -153,6 +144,9 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     @Override
     public String currentLineOrNull()
     {   // !!!!!!!!!!!!!!!!!!!!!! OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
+        if ( this.includedFile != null )
+            return this.includedFile.currentLineOrNull();
+
         if ( this.isLine2bEchoed() ) {
             // return this.nextLine(); // this will Not be null.. just because of the call to hasNextLine() above.
             return getLine_NoEchoPrefix( super.currentLineOrNull() );
@@ -160,14 +154,15 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
             return super.currentLineOrNull();
         }
     }
-    
+
     //=============================================================================
     /**
      * New private STATIC method - to delete the 'echo' prefix from a string
      * @param _line can be null
      * @return the _line as-is but without the 'echo' at the beginning of the line
      */
-    private static String getLine_NoEchoPrefix( String _line ) {
+    private static String getLine_NoEchoPrefix( String _line )
+    {
         if ( _line == null )
             return null;
         Pattern echoPattern = Pattern.compile( REGEXP_ECHO );
@@ -179,11 +174,50 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
         }
     }
 
+    //===========================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //===========================================================================
+
+    /**
+     * See {@link org.ASUX.common.ConfigFileScanner#getState()}.
+     * @return something like: ConfigFile [@mapsBatch1.txt] @ line# 2 = [line contents as-is]
+     */
+    @Override
+    public String getState()
+    {
+        if ( this.includedFile != null )
+            return this.includedFile.getState();
+        else
+            return super.getState();
+    }
+
+    //===========================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //===========================================================================
+
+    /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
+     *  @return true or false
+     */
+    @Override
+    public boolean hasNextLine()
+    {
+        if ( this.includedFile != null ) {
+                final boolean hnl = this.includedFile.hasNextLine();
+                if ( hnl )
+                    return true; // return hnl;
+                else {
+                    this.includedFile = null; // we're done with the included file!
+                    return super.hasNextLine();
+                }
+        } else {
+                return super.hasNextLine();
+        }
+    }
+
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
-    //===========================================================================
     /** Thie method overrides the parent/super class method {@link ConfigFileScanner#nextLine()}
      *  @return 0.0001% chance (a.k.a. code bugs) that this is null. Returns the next string in the list of lines
      *  @throws Exception in case this class is messed up or hasNextLine() is false or has Not been invoked appropriately
@@ -191,15 +225,25 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     @Override
     public String nextLine() throws Exception
     {   // !!!!!!!!!!!!!!!!!!!!!! OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
-        final String nl = super.nextLine();
-        parseLine();
-        if ( this.isLine2bEchoed() ) {
-            return getLine_NoEchoPrefix( nl );
-        } else {
-            return nl;
-        }
+        while ( true ) {
+             // I'm guaranteeing that we'll only iterate once - UNLESS we hit 'continue' (in the lines below.)
+            if ( this.includedFile != null )
+                return this.includedFile.nextLine();
+
+            final String nl = super.nextLine();
+
+            if (  !   parseLine() )  // this means that we hit a 'include @filename' line in the batchfile.  So, we need to REDO this method :-( ugly code.
+                continue;
+
+            if ( this.isLine2bEchoed() ) {
+                return getLine_NoEchoPrefix( nl );
+            } else {
+                return nl;
+            }
+        } // while(true)
     }
 
+    //===========================================================================
     /** Thie method overrides the parent/super class method {@link ConfigFileScanner#nextLineOrNull()}
      *  @return either null (graceful failure) or the next string in the list of lines
      */
@@ -207,21 +251,87 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     public String nextLineOrNull()
     {   // !!!!!!!!!!!!!!!!!!!!!! OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
         final String HDR = CLASSNAME +": nextLineOrNull(): ";
+        while ( true ) {
+             // I'm guaranteeing that we'll only iterate once - UNLESS we hit 'continue' (in the lines below.)
+            if ( this.includedFile != null )
+                return this.includedFile.nextLineOrNull();
 
-        final String nl = super.nextLineOrNull();
+            final String nl = super.nextLineOrNull();
+
+            try {
+                // ATTENTION !! subclasses may have overridden this method/parseLine() and can throw exception(s)
+                if (  !   parseLine() )  // this means that we hit a 'include @filename' line in the batchfile.  So, we need to REDO this method :-( ugly code.
+                    continue;
+            } catch (Exception e) {
+                e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
+                System.err.println( HDR + " Unexpected Internal ERROR, when invoking parseLine(), for line= [" + nl +"]" );
+                System.exit(91); // This is a serious failure. Shouldn't be happening.
+            }
+        
+            if ( this.isLine2bEchoed() ) {
+                return getLine_NoEchoPrefix( nl );
+            } else {
+                return nl;
+            }
+        } // while(true)
+    }
+
+    //==============================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //==============================================================================
+
+    /** <p>New Method added to this subclass.</p>
+     *  <p>ATTENTION: BE VERY CAREFUL when overriding this method, otherwise you cannot take advantage of 'echo' prefix parsing built-in.
+     *  <p>This method should be called after nextLine().  nextLine() is inherited from the parent {@link org.ASUX.common.ConfigFileScanner}.</p>
+     *  @return true if all 'normal', and false IF-AND-ONLY-IF we hit a 'include @filename' line in the batchfile
+     *  @throws Exception This class does NOT.  But .. subclasses may have overridden this method and can throw exception(s).  Example: org.ASUX.yaml.BatchFileGrammer.java
+     */
+    protected boolean parseLine() throws Exception
+    {
+        this.resetFlagsForEachLine();
+        String line = this.currentLineOrNull(); // remember the line is most likely already trimmed.  We need to chop off any 'echo' prefix
+
+        final String HDR = CLASSNAME +": parseLine(): ";
+        if ( this.verbose ) System.out.println( HDR + this.getState() );
+
+        if ( line == null )
+            return true;
+
         try {
-            parseLine(); // ATTENTION!!!!!!!!! subclasses may have overridden this method and can throw exception(s)
-        } catch (Exception e) {
+            // ATTENTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // This block of code below (echoPattern, echoMatcher, this.bLine2bEchoed) MUST be the very BEGINNNG of this function
+            final Pattern echoPattern = Pattern.compile( REGEXP_ECHO );
+            final Matcher echoMatcher = echoPattern.matcher( line );
+            if (echoMatcher.find()) {
+                if ( this.verbose ) System.out.println( HDR +": I found the command to be ECHO-ed '"+ echoMatcher.group(1) +"' starting at index "+  echoMatcher.start() +" and ending at index "+ echoMatcher.end() );    
+                line = echoMatcher.group(1); // line.substring( echoMatcher.start(), echoMatcher.end() );
+                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!! 'line' has been altered here.
+                this.bLine2bEchoed = true;
+                if ( this.verbose ) System.out.println( "\t 2nd echoing Line # "+ this.getState() );
+                // fall thru below.. to identify other commands
+            } // if
+
+            final Pattern includePattern = Pattern.compile( REGEXP_INCLUDE );
+            final Matcher includeMatcher = includePattern.matcher( line );
+            if (includeMatcher.find()) {
+                if ( this.verbose ) System.out.println( HDR +": I found the INCLUDE command: '"+ includeMatcher.group(1) +"' starting at index "+  includeMatcher.start() +" and ending at index "+ includeMatcher.end() );    
+                final String includeFileName = includeMatcher.group(1); // line.substring( includeMatcher.start(), includeMatcher.end() );
+                this.includedFile = this.create();
+                final boolean success = this.includedFile.openFile( includeFileName, this.ok2TrimWhiteSpace, this.bCompressWhiteSpace );
+                if ( ! success )
+                    throw new Exception( "Unknown internal exception opening file: "+ includeFileName );
+                if ( this.verbose ) System.out.println( "\t 2nd echoing Line # "+ this.getState() );
+                return false; // !!!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!! method returns here.
+            } // if
+
+            return true; // all ok.  We did NOT encounter a 'include @filename'
+
+        } catch (PatternSyntaxException e) {
 			e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
-			System.err.println( HDR + " Unexpected Internal ERROR, when invoking parseLine(), for line= [" + nl +"]" );
+			System.err.println( HDR + ": Unexpected Internal ERROR, while checking for pattern ("+ REGEXP_ECHO +")." );
 			System.exit(91); // This is a serious failure. Shouldn't be happening.
         }
-
-        if ( this.isLine2bEchoed() ) {
-            return getLine_NoEchoPrefix( nl );
-        } else {
-            return nl;
-        }
+        return true; // we shouldn't be getting here, due to 'System.exit()' within above catch()
     }
 
     //==============================================================================
@@ -272,19 +382,17 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
         final String HDR = CLASSNAME + ": main(): ";
         class TestConfigFileScanner extends ConfigFileScannerL2 {
             private static final long serialVersionUID = 1L;
-            public TestConfigFileScanner(boolean _verbose) {
-                super(_verbose);
-            }
+            public TestConfigFileScanner(boolean _verbose) { super(_verbose); }
+            protected TestConfigFileScanner create() { return new TestConfigFileScanner( this.verbose ); }
         };
         try {
             final ConfigFileScannerL2 o = new TestConfigFileScanner(false);
             o.openFile( args[0], true, true );
             while (o.hasNextLine()) {
-                // o.nextLine(); // ignore what it produces if you want to take full advantage of this class
                 System.out.println( o.nextLine() );
-                // o.parseLine();
                 // System.out.println( o.currentLine() );
-                o.getState();
+                System.out.println( o.getState() );
+                System.out.println();
             }
 		} catch (Exception e) {
 			e.printStackTrace(System.err); // main().  For Unit testing
