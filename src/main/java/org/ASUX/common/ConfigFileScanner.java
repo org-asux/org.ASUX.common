@@ -56,6 +56,11 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     protected final boolean verbose;
 
     protected String fileName = null;
+    /** ok2TrimWhiteSpace true or false, whether to REMOVE any leading and trailing whitespace.  Example: For YAML processing, trimming is devastating. */
+    protected boolean ok2TrimWhiteSpace = true; // defaults
+    /** bCompressWhiteSpace whether to replace multiple successive whitespace characters with a single space. */
+    protected boolean bCompressWhiteSpace = true; // defaults
+
     protected ArrayList<String> lines; // = new ArrayList<>();
     protected ArrayList<Integer> origLineNumbers; //  = new ArrayList<>();
 
@@ -161,6 +166,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         return (this.lines != null) ? this.lines.size(): -1;
     }
 
+    //===========================================================================
     /**
      * After successfully opening a file.. you can get state-details (which point of the ConfigFile are we at currently).
      * @return something like: ConfigFile [@mapsBatch1.txt] @ line# 2 = [line contents as-is]
@@ -181,6 +187,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     //===========================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //===========================================================================
+
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
      *  @return true or false
      */
@@ -193,6 +200,9 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     }
 
     //===========================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //===========================================================================
+
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
      *  @return 0.0001% chance (a.k.a. code bugs) that this is null. Returns the next string in the list of lines
      *  @throws Exception in case this class is messed up or hasNextLine() is false or has Not been invoked appropriately
@@ -214,6 +224,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         }
     }
 
+    //===========================================================================
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine() - but will return null if any errors or invalid sequence of method invocations
      *  @return either null (graceful failure) or the next string in the list of lines
      */
@@ -249,6 +260,9 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     public boolean openFile( final String _filename, final boolean _ok2TrimWhiteSpace, final boolean _bCompressWhiteSpace ) throws Exception
     {
         final String HDR = CLASSNAME +": openFile("+ _filename +","+ _ok2TrimWhiteSpace +","+ _bCompressWhiteSpace +"): ";
+
+        this.ok2TrimWhiteSpace = _ok2TrimWhiteSpace;
+        this.bCompressWhiteSpace = _bCompressWhiteSpace;
         this.reset(); // just in case.
         this.fileName = _filename;
 
