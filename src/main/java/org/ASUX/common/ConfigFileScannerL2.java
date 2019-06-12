@@ -282,7 +282,7 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
 
                 if ( this.includedFileScanner != null ) {
                         final boolean hnl = this.includedFileScanner.hasNextLine();
-                        if ( this.verbose ) System.out.println( HDR +": this.includedFileScanner.hasNextLine()="+ hnl );    
+                        if ( this.verbose ) System.out.println( HDR +": this.includedFileScanner.hasNextLine()="+ hnl );
                         if ( hnl )
                             return true; // return hnl;
                         else {
@@ -292,11 +292,11 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
 
                 } else {
                     final String nextLn = peekNextLine();
-                    if ( this.verbose ) System.out.println( HDR +": PEEEKING.. '"+ nextLn +"'" );    
+                    if ( this.verbose ) System.out.println( HDR +": PEEEKING.. '"+ nextLn +"'" );
                     assertTrue ( nextLn != null );
 
                     if ( this.isBuiltInCommand( nextLn ) ) {
-                        if ( this.verbose ) System.out.println( HDR +"isBuiltInCommand("+ nextLn +")" );    
+                        if ( this.verbose ) System.out.println( HDR +"confirmed that isBuiltInCommand("+ nextLn +") is true." );
                         // we peeked (see 4 lines above).
                         // Now, we're 100% sure its a 'print' or 'include' line in the FILE.
                         this.nextLine(); // let's go to the next-line and process that 'print' and 'include' commands.
@@ -304,15 +304,15 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
                         assertTrue( retB == true );
 
                     } else {
-                        if ( this.verbose ) System.out.println( HDR +"NO!! NO!! NO!!  isBuiltInCommand("+ nextLn +")" );    
+                        if ( this.verbose ) System.out.println( HDR +"NO!! NO!! NO!!  confirmed that isBuiltInCommand("+ nextLn +") is FALSE!!!" );
                         return true; //we're inside the while-loop after passing the conditional: super.hasNextLine()
                     }
                 } // if-else
 
-                if ( this.verbose ) System.out.println( HDR +": BOTTOM of WHILE-Loop.. .." );    
+                if ( this.verbose ) System.out.println( HDR +": BOTTOM of WHILE-Loop.. .." );
             } // while-loop
 
-            if ( this.verbose ) System.out.println( HDR +": returning FALSE!" );    
+            if ( this.verbose ) System.out.println( HDR +": returning FALSE!" );
             return false; // if we ended the above while-loop, super.hasNextLine() is FALSE!
 
         } catch (Exception e) {
