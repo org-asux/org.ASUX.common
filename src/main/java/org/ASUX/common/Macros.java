@@ -196,7 +196,7 @@ public class Macros {
 		if (_s == null) return null;
 		if ( _props == null ) return _s;
 
-        final String HDR = CLASSNAME +": evalThoroughly(verbose,_s="+ _s +","+ _props.getClass().getName() +"): ";
+        final String HDR = CLASSNAME +": evalThoroughly(verbose,_s="+ _s +",Single-Props-file): ";
 		String retStr = _s;
 		try {
 			Pattern macroPatt = Macros.getPattern( _verbose );
@@ -206,10 +206,12 @@ public class Macros {
 				if ( _verbose ) System.out.println( HDR + "starting iteration with "+ prev );
 
 				retStr = Macros.eval( _verbose, retStr, _props );
+				if ( _verbose ) System.out.println( HDR + " prev="+ prev +" --> retStr="+ retStr );
 
 				// Now, check whether we need to 'rinse+repeat' the above "Macros.eval" above, until no further change happens
 				Matcher matcher = macroPatt.matcher( retStr );
 				if ( matcher.matches() ) { // means, we still have ${ASUX::___} still left (perhaps nested expressions, so we need multiple passes)
+					if ( _verbose ) System.out.println( HDR + " retStr="+ retStr +" still has a MACRO Pattern left in it." );
 					if ( prev.equals( retStr) ) {
 						// clearly.. the ${ASUX::__} still left WILL NEVER get resolved.
 						// if we do NOT quit this do-while loop, we'll be stuck in an infinite loop
@@ -263,12 +265,14 @@ public class Macros {
 						retStr = newstr;
 					// We can have multiple variables, for which values can be in different properties files
 				}
+				if ( _verbose ) System.out.println( HDR + " prev="+ prev +" --> retStr="+ retStr );
 
-				// Now, check whether we need to 'rinse+repeat' the "inner FOR-LOOP" above, until no further change happens
+				// Now, check whether we need to 'rinse+repeat' the "inner DO-WHILE-LOOP" above, until no further change happens
 				Matcher matcher = macroPattern.matcher( retStr );
 				if (  !   matcher.matches() ) { // WHETHER we still have ${ASUX::___} still left (perhaps nested expressions, so we need multiple passes)
 					return retStr;
 				} else {
+					if ( _verbose ) System.out.println( HDR + " retStr="+ retStr +" still has a MACRO Pattern left in it." );
 					if ( prev.equals( retStr) ) {
 						// clearly.. the ${ASUX::__} still left WILL NEVER get resolved.
 						// if we do NOT quit this do-while loop, we'll be stuck in an infinite loop
