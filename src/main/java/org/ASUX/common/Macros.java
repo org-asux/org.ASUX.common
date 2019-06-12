@@ -46,19 +46,7 @@ public class Macros {
 	/** This is NOT a final variable.  So, you can set to whatever you want, to evaluate MACROs in your own context, without disturbing other ${XYZ} expressions. */
 	public static String MACRO_VAR_PREFIX = "ASUX::";
 
-    /** <p>Whether you want deluge of debug-output onto System.out.</p><p>Set this via the constructor.</p>
-     *  <p>It's read-only (final data-attribute).</p>
-     */
-    private final boolean verbose;
-
-    /** The only Constructor.
-     *  @param _verbose Whether you want deluge of debug-output onto System.out
-     */
-    public Macros(boolean _verbose ) {
-		this.verbose = _verbose;
-    }
-    private Macros(){
-		this(false);
+    private Macros() {
     }
 
     //------------------------------------------------------------------------------
