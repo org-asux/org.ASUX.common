@@ -1,0 +1,15 @@
+print line-1\n
+echo print line-2\n
+echo print \n
+echo print \n
+echo print \n
+echo print \n
+echo print .
+echo print -
+echo setProperty VAR1=VALUE1
+include @subscript.txt
+sleep 4
+echo unknown command!!!!!!!!!!
+echo print lastline-in-TOPMOST-scriptfile\n
+
+

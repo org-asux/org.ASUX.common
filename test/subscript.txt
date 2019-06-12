@@ -1,0 +1,4 @@
+print Subscript-AAAAAAAAAAAAAAAAAAAAAAA\n
+print -
+print Within subscript, evaluating macro ${ASUX::VAR1}\n
+echo print Subscript-last\n
