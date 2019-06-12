@@ -43,6 +43,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 
+import static org.junit.Assert.*;
+
 /**
  *  <p>This is part of org.ASUX.common GitHub.com project and the <a href="https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
  *  <p>This class is a bunch of tools to help make it easy to work with the Configuration and Propertyfiles - while making it very human-friendly w.r.t .comments etc...</p>
@@ -129,7 +131,15 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      *  @return either null (graceful failure) or the next string in the list of lines
      */
     public String currentLineOrNull() {
+        return currentLineOrNull_Impl();
+    }
 
+    /**
+     * This method exists primarily to allow this class to invoke currentLineOrNull() (especially for getState()).. without invoking sub-class' overridden version.
+     * @return either null (graceful failure) or the next string in the list of lines
+     */
+    private final String currentLineOrNull_Impl()
+    {   // final String HDR = CLASSNAME +": currentLineOrNull_Impl(): ";
         if ( this.currentLineNum > 0 && this.currentLineNum <= this.lines.size() ) {
             // return this.nextLine(); // this will Not be null.. just because of the call to hasNextLine() above.
             return this.lines.get ( this.currentLineNum - 1 );
@@ -175,7 +185,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         if ( this.fileName == null || this.currentLineNum <= 0 )
             return "ConfigFile ["+ this.fileName +"] is in invalid state";
         else {
-            final String s = "@ line# "+ this.origLineNumbers.get(this.currentLineNum - 1) +" = ["+ this.currentLineOrNull() +"]";
+            final String s = "@ line# "+ this.origLineNumbers.get(this.currentLineNum - 1) +" = ["+ this.currentLineOrNull_Impl() +"]";
             if ( this.fileName.startsWith("@") ) {
                 return "File-name: '"+ this.fileName.substring(1) +"' "+ s;
             } else {
@@ -199,6 +209,16 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         return this.iterator.hasNext();
     }
 
+    /** This class aims to AUGMENTS java.util.Scanner's hasNextLine() and nextLine(), but needs to be used with CAUTION.
+     *  @return the next line or NULL
+     *  @throws IndexOutOfBoundsException if this method is NOT-PROPERLY called within a loop() based on the conditional: hasNextLine()
+     */
+    public String peekNextLine() throws IndexOutOfBoundsException {
+        if ( this.lines == null ) return null;
+        if ( this.iterator == null ) return null;
+        return this.lines.get ( this.getLineNum() ); // compare this return-value with that of currentLine()
+    }
+
     //===========================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //===========================================================================
@@ -207,42 +227,22 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      *  @return 0.0001% chance (a.k.a. code bugs) that this is null. Returns the next string in the list of lines
      *  @throws Exception in case this class is messed up or hasNextLine() is false or has Not been invoked appropriately
      */
-    public String nextLine() throws Exception
-    {
-        final String HDR = CLASSNAME +": nextLine(): ";
-        if ( this.hasNextLine() ) {
-            this.iterator.next();
-            this.currentLineNum ++;
-            resetFlagsForEachLine(); // so that the isXXX() methods invoked of this class -- now that we're on NEW/NEXT line -- will NOT take a shortcut!
-
-            if ( this.verbose ) System.out.println( HDR +"\t" + this.getState() );
-            return this.lines.get ( this.currentLineNum - 1 );
-        } else {
-            this.currentLineNum = -1;
-            // WARNING: Do not invoke this.rewind() or this.reset().  It will INCORRECTLY change the value of this.iterator
-            throw new Exception( HDR +" hasNextLine() is false! CurrentLineNum=" +this.currentLineNum +".  Debug-details: state="+ this.getState() );
-        }
+    public String nextLine() throws Exception {
+            return nextLineOrNull();
     }
 
     //===========================================================================
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine() - but will return null if any errors or invalid sequence of method invocations
      *  @return either null (graceful failure) or the next string in the list of lines
      */
-    public String nextLineOrNull()
-    {
+    public String nextLineOrNull() {
         final String HDR = CLASSNAME +": nextLineOrNull(): ";
-        if ( this.hasNextLine() ) {
-            this.iterator.next();
-            this.currentLineNum ++;
-            resetFlagsForEachLine(); // so that the isXXX() methods invoked of this class -- now that we're on NEW/NEXT line -- will NOT take a shortcut!
+        this.iterator.next();
+        this.currentLineNum ++;
+        resetFlagsForEachLine(); // so that the isXXX() methods invoked of this class -- now that we're on NEW/NEXT line -- will NOT take a shortcut!
 
-            if ( this.verbose ) System.out.println( HDR +"\t " + this.getState() );
-            return this.lines.get ( this.currentLineNum - 1 );
-        } else {
-            this.currentLineNum = -1;
-            // WARNING: Do not invoke this.rewind() or this.reset().  It will INCORRECTLY change the value of this.iterator
-            return null;
-        }
+        if ( this.verbose ) System.out.println( HDR +"\t" + this.getState() );
+        return this.lines.get ( this.currentLineNum - 1 );
     }
 
     //==============================================================================
@@ -364,36 +364,31 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
-    /** This deepClone function is unnecessary, as org.apache.commons.lang3.SerializationUtils.clone(this) is unable to handle 'transient' variables in this class.
+    /** This deepClone function is VERY MUCH necessary, as No cloning-code can handle 'transient' variables in this class.
      *  @param _orig what you want to deep-clone
      *  @return a deep-cloned copy, created by serializing into a ByteArrayOutputStream and reading it back (leveraging ObjectOutputStream)
      */
-    public static ConfigFileScanner deepClone(ConfigFileScanner _orig) {
+    public static ConfigFileScanner deepClone( ConfigFileScanner _orig ) {
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(_orig);
-            
-            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            final ConfigFileScanner newobj = (ConfigFileScanner) ois.readObject();
-
-            // because this class has at least one TRANSIENT class-variable.. ..
-            // we need to 'restore' that object's transient variable to a 'replica'
-            newobj.iterator = newobj.lines.iterator();
-            for ( int ix = 0; ix < newobj.currentLineNum; ix++ )
-                newobj.iterator.next(); // This will advance this.iterator to the right position, as java.lang.Iterator is NOT clonable/NOT SERIALIZABLE.
-                // we rarely CLONE an object of this class, when it's still pointing to line #1.  So, this ABOVE for-loop is just fine.
-
+            final ConfigFileScanner newobj = Utils.deepClone( _orig );
+            newobj.deepCloneFix();
             return newobj;
-
-        } catch (ClassNotFoundException e) {
-			e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
-            return null;
-        } catch (java.io.IOException e) {
+        } catch (Exception e) {
 			e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
             return null;
         }
+    }
+
+    /**
+     * In order to allow deepClone() to work seamlessly up and down the class-hierarchy.. I should allow subclasses to EXTEND (Not semantically override) this method.
+     */
+    protected void deepCloneFix() {
+            // because this class has at least one TRANSIENT class-variable.. ..
+            // we need to 'restore' that object's transient variable to a 'replica'
+            this.iterator = this.lines.iterator();
+            for ( int ix = 0; ix < this.currentLineNum; ix++ )
+                this.iterator.next(); // This will advance this.iterator to the right position, as java.lang.Iterator is NOT clonable/NOT SERIALIZABLE.
+                // we rarely CLONE an object of this class, when it's still pointing to line #1.  So, this ABOVE for-loop is just fine.
     }
 
     //==============================================================================
