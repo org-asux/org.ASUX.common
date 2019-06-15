@@ -92,7 +92,7 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      * LinkedHashMap&lt;&gt;(), putting content into it, updating content as File is
      * further processed, ..)
      */
-    protected final LinkedHashMap<String, Properties> propsSetRef;
+    protected transient LinkedHashMap<String, Properties> propsSetRef;
 
     // ==============================================================================
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -128,7 +128,7 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     }
 
     /**
-     * Since this is an abstract class, parse() line - when it encounters a 'include @filename' - needs to invoke a constructor that creates a 2nd object
+     * Since this is an abstract class, within execBuiltInCommand() line - when it encounters a 'include @filename' - needs to invoke a constructor that creates a 2nd object
      * @return an object of the subclass of this ConfigFileScannerL2.java
      */
     protected abstract ConfigFileScannerL2 create();
@@ -145,9 +145,10 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     public void reset() {
         super.reset();
         // this.resetFlagsForEachLine(); this is already invoked within super.reset()
+
         this.includedFileScanner = null;
-        // if ( this.propsSetRef != null ) this.propsSetRef.clear(); <---- WARNING:
-        // Since the lifecycle of the instance pointed to by 'propsSetRef' is owned by someone else!!!
+        // if ( this.propsSetRef != null ) this.propsSetRef.clear(); <---- WARNING: !!!!!!!!!!!!!!!!!!!
+        // The lifecycle of the instance/object pointed to by 'propsSetRef' is owned by someone else!!!
     }
 
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -158,7 +159,7 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      */
     @Override
     protected void resetFlagsForEachLine() {
-        // super.resetFlagsForEachLine(); <-- this is: protected abstract
+        // super.resetFlagsForEachLine(); <-- this is: protected abstract in superclass.  So, nothing to invoke.
         this.bLine2bEchoed = false;
         this.currentLineAfterMacroEval = null;
         this.printOutputCmd = false;
@@ -176,15 +177,6 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
         return this.bLine2bEchoed;
     }
 
-    /**
-     * <p> New Method added to this subclass. </p>
-     * <p> For use by any Processor of config-file.. to semantically interpret a SPECIFIC command: 'print -'; Typically, such interpretation can mean, print the _OUTPUT_ of the previous line/command in the file.</p>
-     * @return true or false, whether the current line the config/batch file is exactly 'print -'
-     */
-    public boolean isPrintOutputCmd() {
-        return this.printOutputCmd;
-    }
-
     // ==============================================================================
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     // ==============================================================================
@@ -198,17 +190,18 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      */
     @Override
     public String currentLine() throws Exception
-    { // !!!!!!!!!!!!!!!!!!!!!! OVERRIDES Parent Method  // !!!!!!!!!!!!!!!!!!!!!!!!
+    { // !!!!!!!!!!!!!!!!!!!!!! COMPLETELY OVERRIDES Parent Method  // !!!!!!!!!!!!!!!!!!!!!!!!
         // final String HDR = CLASSNAME + ": currentLine(): ";
 
         if (this.includedFileScanner != null)
             return this.includedFileScanner.currentLine();
 
-        if (this.isLine2bEchoed()) {
-            return getLine_NoEchoPrefix( this.currentLineAfterMacroEval );
-        } else {
-            return this.currentLineAfterMacroEval;
-        }
+        return this.currentLineAfterMacroEval;
+        // if (this.isLine2bEchoed() ) {
+        //     return removeEchoPrefix( this.currentLineAfterMacroEval );
+        // } else {
+        //     return this.currentLineAfterMacroEval;
+        // }
     }
 
     //=============================================================================
@@ -217,37 +210,66 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      */
     @Override
     public String currentLineOrNull()
-    {   // !!!!!!!!!!!!!!!!!!!!!! OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
-        // final String HDR = CLASSNAME +": currentLineOrNull(): ";
-
+    {   // !!!!!!!!!!!!!!!!!!!!!! COMPLETELY OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
         if ( this.includedFileScanner != null )
             return this.includedFileScanner.currentLineOrNull();
 
-        if ( this.isLine2bEchoed() ) {
-            // return this.nextLine(); // this will Not be null.. just because of the call to hasNextLine() above.
-            return getLine_NoEchoPrefix( this.currentLineAfterMacroEval );
-        } else {
-            return this.currentLineAfterMacroEval;
-        }
+        return this.currentLineAfterMacroEval;
+        // if ( this.isLine2bEchoed() ) {
+        //     return removeEchoPrefix( this.currentLineAfterMacroEval );
+        // } else {
+        //     return this.currentLineAfterMacroEval;
+        // }
     }
 
-    //=============================================================================
+    //===========================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //===========================================================================
+
     /**
-     * New private STATIC method - to delete the 'echo' prefix from a string
-     * @param _line can be null
-     * @return the _line as-is but without the 'echo' at the beginning of the line
+     *  <p>For a string, it detects whether it starts with 'echo' after ignoring all the appropriate whitespace.. </p>
+     *  @param _verbose Whether you want deluge of debug-output onto System.out.
+     *  @param line pass in a string (Not null, else NullPointer exception)
+     *  @return true if current-line starts with 'echo' after ignoring all the appropriate whitespace
      */
-    private static String getLine_NoEchoPrefix( String _line )
-    {
-        if ( _line == null )
-            return null;
-        Pattern echoPattern = Pattern.compile( REGEXP_ECHO );
-        Matcher echoMatcher    = echoPattern.matcher( _line );
+    public static boolean checkForEchoPrefix( final boolean _verbose, final String line )
+    {   final String HDR = CLASSNAME +": checkForEchoPrefix(): ";
+        final Pattern echoPattern = Pattern.compile( REGEXP_ECHO );
+        final Matcher echoMatcher = echoPattern.matcher( line );
         if (echoMatcher.find()) {
-            return echoMatcher.group(1); // line.substring( echoMatcher.start(), echoMatcher.end() );
-        } else {
-            return _line;
+            if ( _verbose ) System.out.println( HDR +": I found the command to be ECHO-ed '"+ echoMatcher.group(1) +"' starting at index "+  echoMatcher.start() +" and ending at index "+ echoMatcher.end() );    
+            if ( _verbose ) System.out.println( HDR +"\t Detected 'ECHO' prefix in Line # "+ line );
+            return true;
         }
+        return false;
+    }
+
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    /**
+     *  <p>A static utility method</p>
+     *  <p>Given a string, it detects whether it starts with 'echo' after ignoring all the appropriate whitespace.. then, return without the 'echo' prefix from the string</p>
+     *  @param _line can be null or any String
+     *  @return the rest of _line AFTER removing any 'echo ' prefix .. including any whitespace preceding echo, using the REGEXP: \s*echo\s
+     */
+    protected static String removeEchoPrefix( final String _line )
+    {   final String HDR = CLASSNAME +": removeEchoPrefix(): ";
+        if ( _line == null ) return null;
+
+        try {
+            final Pattern echoPattern = Pattern.compile( REGEXP_ECHO );
+            final Matcher echoMatcher = echoPattern.matcher( _line );
+            if (echoMatcher.find()) {
+                // if ( _verbose ) System.out.println( HDR +": I found the command to be ECHO-ed '"+ echoMatcher.group(1) +"' starting at index "+  echoMatcher.start() +" and ending at index "+ echoMatcher.end() );    
+                return echoMatcher.group(1);
+            } else {
+                return _line;
+            } // if-else
+        } catch (PatternSyntaxException e) {
+			e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
+			System.err.println( HDR + ": Unexpected Internal ERROR, while checking for pattern ("+ REGEXP_ECHO +")." );
+			System.exit(91); // This is a serious failure. Shouldn't be happening.
+        }
+        return null; // we shouldn't be getting here, due to 'System.exit()' within above catch()
     }
 
     //===========================================================================
@@ -296,16 +318,19 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
                     assertTrue ( nextLn != null );
 
                     if ( this.isBuiltInCommand( nextLn ) ) {
-                        if ( this.verbose ) System.out.println( HDR +"confirmed that isBuiltInCommand("+ nextLn +") is true." );
+                        if ( this.verbose ) System.out.println( HDR +"confirmed that isBuiltInCommand("+ nextLn +") is true. Quietly and transparently processing it." );
                         // we peeked (see 4 lines above).
                         // Now, we're 100% sure its a 'print' or 'include' line in the FILE.
                         this.nextLine(); // let's go to the next-line and process that 'print' and 'include' commands.
-                        final boolean retB = this.parseLine(); // this means that we hit a 'include @filename' or 'print ...' line in the batchfile.  So, we need to process-n-skip those lines :-( ugly code.
+// if ( this.verbose ) System.out.println( HDR +"BEFORE execBuiltInCommand() is invoked.. this.currentLineAfterMacroEval="+ s );
+// if ( this.verbose ) System.out.println( HDR +"this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
+// if ( this.verbose ) new Debug(true).printAllProps( HDR +" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !! <<<<<<<<<<<<<<<<<<<<<<<<<<<< ", this.propsSetRef );
+                        final boolean retB = this.execBuiltInCommand(); // this means that we hit a 'include @filename' or 'print ...' line in the batchfile.  So, we need to process-n-skip those lines :-( ugly code.
                         assertTrue( retB == true );
 
                     } else {
                         if ( this.verbose ) System.out.println( HDR +"NO!! NO!! NO!!  confirmed that isBuiltInCommand("+ nextLn +") is FALSE!!!" );
-                        return true; //we're inside the while-loop after passing the conditional: super.hasNextLine()
+                        return true; //we're inside the while-loop after passing the while-loop's conditional-expression: super.hasNextLine()
                     }
                 } // if-else
 
@@ -334,12 +359,20 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     @Override
     public String nextLine() throws Exception
     {   // !!!!!!!!!!!!!!!!!!!!!! OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
+        final String HDR = CLASSNAME + ": nextLine(): ";
         if ( this.includedFileScanner != null )
             return this.includedFileScanner.nextLine();
 
-        final String nextLn = getLine_NoEchoPrefix( super.nextLine() );
+        // this.bLine2bEchoed must be set PRIOR to calling evalMacro() 4 lines below.
+        String nextLn = super.nextLine();
+        this.bLine2bEchoed = ConfigFileScannerL2.checkForEchoPrefix( this.verbose, nextLn );
+        nextLn = ConfigFileScannerL2.removeEchoPrefix( nextLn );
 
+        // make sure this.bLine2bEchoed has been set before invoking evalMacro()
         this.currentLineAfterMacroEval = evalMacro( nextLn );
+
+        if ( this.verbose ) System.out.println( HDR +" this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
+        if ( this.verbose ) System.out.println( HDR +" this.currentLine()="+ super.currentLine() );
         return this.currentLine();
     }
 
@@ -349,20 +382,28 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      */
     @Override
     public String nextLineOrNull()
-    {   final String HDR = CLASSNAME + ": nextLineOrNull(): ";
+    {   // !!!!!!!!!!!!!!!!!!!!!! OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
+        final String HDR = CLASSNAME + ": nextLineOrNull(): ";
         if ( this.includedFileScanner != null )
             return this.includedFileScanner.nextLineOrNull();
 
-        final String nextLn = getLine_NoEchoPrefix( super.nextLineOrNull() );
+        String nextLn = super.nextLineOrNull();
+        // this.bLine2bEchoed must be set PRIOR to calling evalMacro() 4 lines below.
+        this.bLine2bEchoed = ConfigFileScannerL2.checkForEchoPrefix( this.verbose, nextLn );
+        nextLn = ConfigFileScannerL2.removeEchoPrefix( nextLn );
 
         try {
+            // make sure this.bLine2bEchoed has been set before invoking evalMacro()
             this.currentLineAfterMacroEval = evalMacro( nextLn );
         } catch (Exception e) {
-            // since we shouldn't be getting this error, but .. as it's not the end of the world.. let's dump error on the user and return NULL.
-            e.printStackTrace(System.out);
-            System.out.println( "\n\n"+ HDR + " Unexpected Internal ERROR @ " + this.getState() +"." );
+            // since we shouldn't be getting this error, but .. as we'd like this class to be garbage-in-garbage-out flexible.. let's dump error on the user and return NULL.
+            e.printStackTrace(System.err);
+            System.err.println( "\n\n"+ HDR + " Unexpected Internal ERROR @ " + this.getState() +"." );
             return null;
         }
+
+        if ( this.verbose ) System.out.println( HDR +" this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
+        if ( this.verbose ) System.out.println( HDR +" this.currentLine()="+ super.currentLineOrNull() );
         return this.currentLineOrNull();
     }
 
@@ -370,22 +411,24 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     private String evalMacro( final String preMacroStr ) throws Exception, MacroException
     {   final String HDR = CLASSNAME + ": evalMacro(): ";
 
-        final String currLnAfterMacroEval = Macros.evalThoroughly(this.verbose, preMacroStr, this.propsSetRef);
-        final boolean bNoChange = ( currLnAfterMacroEval == null ) ? (preMacroStr == null): currLnAfterMacroEval.equals(preMacroStr);
+        final String currLnNoMacro = Macros.evalThoroughly( this.verbose, preMacroStr, this.propsSetRef );
+        final boolean bNoChange = ( currLnNoMacro == null ) ? (preMacroStr == null): currLnNoMacro.equals( preMacroStr );
+// if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ", this.propsSetRef );
+// if ( this.verbose ) System.out.println( HDR +" this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
 
         if ( this.verbose ) System.out.println( HDR + "Echo (As-Is): " + preMacroStr);
-        if ( this.verbose ) System.out.println( HDR + "Echo (Macros-substituted): " +  currLnAfterMacroEval );
+        if ( this.verbose ) System.out.println( HDR + "Echo (Macros-substituted): " +  currLnNoMacro );
 
         if ( this.isLine2bEchoed() ) {
             if ( bNoChange ) {
-                System.err.println("\tEcho: " + preMacroStr);
+                System.out.println("\tEcho: " + preMacroStr);
             } else {
-                System.err.println("\tEcho (As-Is): " + preMacroStr);
-                System.err.println("\tEcho (Macros-substituted): " + getLine_NoEchoPrefix( currLnAfterMacroEval ) );
+                System.out.println("\tEcho (As-Is): " + preMacroStr);
+                System.out.println("\tEcho (Macros-substituted): " + ConfigFileScannerL2.removeEchoPrefix( currLnNoMacro ) );
             }
         }
 
-        return currLnAfterMacroEval;
+        return currLnNoMacro;
     }
 
     //==============================================================================
@@ -393,43 +436,19 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     //==============================================================================
 
     /**
-     *  <p>This method is used to simply tell whether 'current-line' matches the REGEXP patterns that parseLine() will be processing 'internally' within this class</p>
+     *  <p>This method is used to simply tell whether 'current-line' matches the REGEXP patterns that execBuiltInCommand() will be processing 'internally' within this class</p>
      *  <p>In this class, those would be the REGEXP for 'print ...' and 'include @...'</p>
      *  @param nextLn current line or 'peek-forward' line
      *  @return true if the line will be processed 'internally'
      */
     protected boolean isBuiltInCommand( final String nextLn ) {
+        final String HDR = CLASSNAME +": isBuiltInCommand(): ";
         if ( nextLn == null ) return false;
         final String noprefix = removeEchoPrefix( nextLn );
+        if ( this.verbose ) System.out.println( HDR + "noprefix="+ noprefix );
+        if ( this.verbose ) System.out.println( HDR + "noprefix.matches( REGEXP_PRINT )="+ noprefix.matches( REGEXP_PRINT ) );
+
         return noprefix.matches( REGEXP_PRINT ) || noprefix.matches( REGEXP_INCLUDE );
-    }
-
-    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    /**
-     *  <p>A static utility method</p>
-     *  <p>Given a string, it simply tells you whether it starts with 'echo' after ignoring all the appropriate whitespace</p>
-     *  @param _s can be null or any String
-     *  @return the rest of _s AFTER removing any 'echo ' prefix .. including any whitespace preceding echo, using the REGEXP: \s*echo\s
-     */
-    protected static String removeEchoPrefix( final String _s )
-    {   final String HDR = CLASSNAME +": removeEchoPrefix(): ";
-        if ( _s == null ) return null;
-
-        try {
-            final Pattern echoPattern = Pattern.compile( REGEXP_ECHO );
-            final Matcher echoMatcher = echoPattern.matcher( _s );
-            if (echoMatcher.find()) {
-                // if ( _verbose ) System.out.println( HDR +": I found the command to be ECHO-ed '"+ echoMatcher.group(1) +"' starting at index "+  echoMatcher.start() +" and ending at index "+ echoMatcher.end() );    
-                return echoMatcher.group(1);
-            } else {
-                return _s;
-            } // if-else
-        } catch (PatternSyntaxException e) {
-			e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
-			System.err.println( HDR + ": Unexpected Internal ERROR, while checking for pattern ("+ REGEXP_ECHO +")." );
-			System.exit(91); // This is a serious failure. Shouldn't be happening.
-        }
-        return null; // we shouldn't be getting here, due to 'System.exit()' within above catch()
     }
 
     //==============================================================================
@@ -442,13 +461,10 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      *  @return true if all 'normal', and false IF-AND-ONLY-IF any problems (you are advised to throw Exception instead)
      *  @throws Exception This class does NOT.  But .. subclasses may have overridden this method and can throw exception(s).  Example: org.ASUX.yaml.BatchFileGrammer.java
      */
-    protected boolean parseLine() throws Exception
+    protected boolean execBuiltInCommand() throws Exception
     {
-        // this.resetFlagsForEachLine();
-        // ??? Why here again!? this.currentLineAfterMacroEval = this.currentLineOrNull(); // remember the line is most likely already trimmed.  We need to chop off any 'echo' prefix
-
-        final String HDR = CLASSNAME +": parseLine(): ";
-        if ( this.verbose ) System.out.println( HDR + this.getState() );
+        final String HDR = CLASSNAME +": execBuiltInCommand(): ";
+        if ( this.verbose ) System.out.println( HDR + this.getState() +"\n\t\tthis.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
 
         if ( this.currentLineAfterMacroEval == null || this.currentLineAfterMacroEval.trim().length() <= 0 )
             throw new Exception("Serious internal error: We have this.currentLineAfterMacroEval='"+ this.currentLineAfterMacroEval +"'.\nERROR in"+ this.getState() );
@@ -456,21 +472,6 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
             // If user's Properties (loaded into this.allPropsRef) lead to a MACRO EXPRESSION that is null.. that is the user's problem to figure out what the heck is this exception.
 
         try {
-
-            // ATTENTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // This block of code below (echoPattern, echoMatcher, this.bLine2bEchoed) MUST be the very BEGINNNG of this function
-            final Pattern echoPattern = Pattern.compile( REGEXP_ECHO );
-            final Matcher echoMatcher = echoPattern.matcher( this.currentLineAfterMacroEval );
-            if (echoMatcher.find()) {
-                if ( this.verbose ) System.out.println( HDR +": I found the command to be ECHO-ed '"+ echoMatcher.group(1) +"' starting at index "+  echoMatcher.start() +" and ending at index "+ echoMatcher.end() );    
-                this.currentLineAfterMacroEval = echoMatcher.group(1); // this.currentLineAfterMacroEval.substring( echoMatcher.start(), echoMatcher.end() );
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!! 'this.currentLineAfterMacroEval' has been altered here.
-                this.bLine2bEchoed = true;
-                if ( this.verbose ) System.out.println( HDR +"\t 1st echoing Line # "+ this.getState() );
-                // fall thru below.. to identify other commands
-                // do NOT return here.
-            } // if
-
             final Pattern includePattern = Pattern.compile( REGEXP_INCLUDE );
             final Matcher includeMatcher = includePattern.matcher( this.currentLineAfterMacroEval );
             if (includeMatcher.find()) {
@@ -508,43 +509,39 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
+    public void debug() {
+        if ( this.verbose ) new Debug(this.verbose).printAllProps( CLASSNAME +" debug() ################################################################################ ", this.propsSetRef );
+    }
+
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     /**
      *  <p>This method is the literal-equivalent of 'echo' of BASH /bin/sh /bin/tcsh. How is this different from 'echo'?  Well, 'echo' is more PRIMITIVE.  It shows the command __TO BE__ executed, after ALL MACRO-Replacements.</p>
      *  @param _printExpression whatever is to the RIGHT side of the 'print' command in the Config file.
      *  @throws Exception any error (potentially from sub-classes)
      */
-    protected void onPrintCmd( final String _printExpression ) throws Exception
+    private final void onPrintCmd( String _printExpression ) throws Exception
     {
         final String HDR = CLASSNAME + ": onPrintCmd("+ _printExpression +"): ";
-        if ( this.verbose ) System.out.print( HDR +" @ method-beginning." );
+        if ( this.verbose ) System.out.println( HDR +" @ method-beginning." );
 
-        // Note: Because of the RegExp based grammer in parseLine().. this assertTrue should never throw.
+        // Note: Because of the RegExp based grammer in execBuiltInCommand().. this assertTrue should never throw.
         assertTrue ( _printExpression != null);
 
         String str2output = _printExpression.toString(); // clone
         if ( str2output.trim().endsWith("\\n") ) {
             str2output = str2output.substring(0, str2output.length()-2); // chop out the 2-characters '\n'
-            if ( str2output.trim().length() > 0 ) { // Whether: the print command has text other than the \n character
-
-                // final Object o = this.memoryAndContext.getDataFromMemory( str2output.trim() );
-                // ????????????????????????????????????????????????????????
-                // How do we allow sub-classes to invoke methods like the ABOVE STATEMENT:  Example:    print !lookupContent
-                // NOTE: A simple workaround:   Within Config/Batch file, we need 2 lines:  (1) use !lookupContent (2) print -
-                // See 14 lines ABOVE .. on how to implement that workaround.
-                System.out.println( str2output ); // println (<--- end-of-line character outputted)
-
-            } else { // if length() <= 0 .. which prints all we have is a simple 'print \n'
-                System.out.println(); // OK. just print a new line, as the print command is NOTHING-BUT-A-simple 'print \n'
-            }
+            // !!!!!!!!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!!!!
+            // How do we allow sub-classes to INFLUENCE what is 'printed':  Example:    print !lookupContent (within subclasses)
+            // NOTE: A simple workaround:   Within subclasses.. for a Config/Batch file, we need 2 lines:  (1) use !lookupContent (2) print -
+            System.out.println( str2output ); // println (<--- end-of-line EOL character is output)
 
         } else {
-            System.out.print( str2output +" " ); // print only (<--- NO EOL character outputted.)
+            System.out.print( str2output +" " ); // print only (<--- NO end-of-line EOL character outputted.)
             // Why add a ' ' at the end?
-            // Because I currently do NOT support printing ANY WhiteSpace (incl. Tabs)
+            // Because I currently do NOT support printing ANY WhiteSpace (incl. Tabs).. .. so successive 'print' commands have at least 1 space separating the output
         }
 
-        // ATTENTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // DO NOT COMMENT THIS ABOVE.  Do NOT ADD AN IF CONDITION to this.  This is by design.
         System.out.flush();
     }
 
@@ -557,9 +554,10 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      *  @return a deep-cloned copy, created by serializing into a ByteArrayOutputStream and reading it back (leveraging ObjectOutputStream)
      */
     public static ConfigFileScannerL2 deepClone( final ConfigFileScannerL2 _orig ) {
+        assertTrue( _orig != null );
         try {
             final ConfigFileScannerL2 newobj = Utils.deepClone( _orig );
-            newobj.deepCloneFix();
+            newobj.deepCloneFix( _orig );
             return newobj;
         } catch (Exception e) {
 			e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
@@ -567,12 +565,15 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
         }
     }
 
-    // /**
-    //  * In order to allow deepClone() to work seamlessly up and down the class-hierarchy.. I should allow subclasses to EXTEND (Not semantically override) this method.
-    //  */
-    // protected void deepCloneFix() {
-    //         // UNLIKE SUPER-Class .. this CLASS DOES NOT __ANY__ TRANSIENT class-variable.. ..
-    // }
+    /**
+     * In order to allow deepClone() to work seamlessly up and down the class-hierarchy.. I should allow subclasses to EXTEND (Not semantically override) this method.
+     * @param _orig the original NON-Null object
+     */
+    protected void deepCloneFix( final ConfigFileScannerL2 _orig ) {
+        super.deepCloneFix(_orig);
+        // this CLASS has TRANSIENT class-variables..
+        this.propsSetRef = _orig.propsSetRef;
+    }
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -584,7 +585,7 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
             private static final long serialVersionUID = 9990L;
             public TestConfigFileScanner(boolean _verbose) { super(_verbose); }
             protected TestConfigFileScanner create() { return new TestConfigFileScanner( this.verbose ); }
-            protected void onPrintDash() { System.out.println("----Print-DASH----Print-DASH----Print-DASH----Print-DASH----Print-DASH----Print-DASH----Print-DASH----"); }
+            // protected void onPrintDash() { System.out.println("----Print-DASH----Print-DASH----Print-DASH----Print-DASH----Print-DASH----Print-DASH----Print-DASH----"); }
         };
         try {
             boolean verbose = false;
