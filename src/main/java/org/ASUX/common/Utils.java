@@ -114,13 +114,13 @@ public class Utils {
             // System.out.println( HDR +"# of entries loaded into java.util.Properties = "+ props.size() );
             // props.list( System.out );
             return props;
-        } catch(Exception e) {
-            e.printStackTrace( System.err );
-            System.err.println( e.getMessage() );
+        // } catch(Exception e) {
+            // e.printStackTrace( System.err );
+            // System.err.println( e.getMessage() );
         } finally {
             scanner.close();
         }
-        return null;
+        // return null;
     }
 
     //==============================================================================
