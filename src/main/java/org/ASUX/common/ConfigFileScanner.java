@@ -419,6 +419,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
     /**
      * In order to allow deepClone() to work seamlessly up and down the class-hierarchy.. I should allow subclasses to EXTEND (Not semantically override) this method.
+     * @param _orig the original NON-Null object
      */
     protected void deepCloneFix( final ConfigFileScanner _orig ) {
             // because this class has at least one TRANSIENT class-variable.. ..
