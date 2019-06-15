@@ -68,7 +68,7 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     // instance variables.
 
-    final protected LinkedHashMap<String,Properties> allProps;
+    // protected transient final LinkedHashMap<String,Properties> allProps;
 
     // final protected boolean bOwnsLifecycleOfAllProps;
 
@@ -82,9 +82,10 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
     public ScriptFileScanner( boolean _verbose ) {
         // this( _verbose, new LinkedHashMap<String,Properties>() );
         super( _verbose, new LinkedHashMap<String,Properties>() );
-        this.allProps = this.propsSetRef; // Using a NASTY TRICK - to ensure 2nd parameter of call to super() is the same has RHS on this statement.
-        this.allProps.put( GLOBALVARIABLES, new Properties() );
-        // this.bOwnsLifecycleOfAllProps = true;  // this class _OWNS_ the creation, clear(), destruction of the LinkedHashMap that is pointed to by 'this.allProps'
+        // this.all Props = this.props SetRef; // Using a NASTY TRICK - to ensure 2nd parameter of call to super() is the same has RHS on this statement.
+        this.propsSetRef.put( GLOBALVARIABLES, new Properties() );
+assertTrue( false ); // Just to find out ..which code is using this constructor?
+        // this.bOwnsLifecycleOfAllProps = true;  // this class _OWNS_ the creation, clear(), destruction of the LinkedHashMap that is pointed to by 'this.all Props'
     }
 
     /** <p>The constructor to use - for SHALLOW-cloning an instance of this class.</p>
@@ -94,13 +95,13 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
     public ScriptFileScanner( boolean _verbose, final LinkedHashMap<String,Properties> _propsSet ) {
         super( _verbose, _propsSet );
         assertTrue( _propsSet != null );
-        this.allProps = _propsSet;
-        // this.bOwnsLifecycleOfAllProps = false; // this class DOES NOT own the creation, clear(), destruction of WHAREVER is pointed to by 'this.allProps'
+        // this.bOwnsLifecycleOfAllProps = false; // this class DOES NOT own the creation, clear(), destruction of WHAREVER is pointed to by 'this.all Props'
     }
 
     /** Do NOT use.  USE ONLY in emergencies and ONLY IF you know what the fuck you are doing.  No questions will be answered, and NO help will be provided. */
     protected ScriptFileScanner() {
-        super(); this.allProps = null;
+        super();
+assertTrue( false ); // Just to find out ..which code is using this constructor?
         // this.bOwnsLifecycleOfAllProps = false;
     }
 
@@ -109,28 +110,28 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
      * @return an object of this ScriptFileScanner.java
      */
     protected ScriptFileScanner create() {
-        return new ScriptFileScanner( this.verbose, this.allProps );
+        return new ScriptFileScanner( this.verbose, this.propsSetRef );
     }
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
-    /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine() and reset().<br>reset() has draconian-implications - as if openConfigFile() was never called!
-     */
-    @Override
-    public void reset() {
-        super.reset();
-        // this.resetFlagsForEachLine(); this is already invoked within super.reset()
-        // do NOT EVER DO THIS here in this reset():--> this.allProps.clear();
-    }
+    // /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine() and reset().<br>reset() has draconian-implications - as if openConfigFile() was never called!
+    //  */
+    // @Override
+    // public void reset() {
+    //     super.reset();
+    //     // this.resetFlagsForEachLine(); this is already invoked within super.reset()
+    //     // do NOT EVER DO THIS here in this reset():--> this.propsSetRef.clear();
+    // }
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
     /**
-     *  <p>This method is used to simply tell whether 'current-line' matches the REGEXP patterns that parseLine() will be processing 'internally' within this class</p>
+     *  <p>This method is used to simply tell whether 'current-line' matches the REGEXP patterns that execBuiltInCommand() will be processing 'internally' within this class</p>
      *  <p>In this class, those would be the REGEXP for 'print ...' and 'include @...'</p>
      *  @param nextLn current line or 'peek-forward' line
      *  @return true if the line will be processed 'internally'
@@ -161,21 +162,21 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
      *  @throws Exception This class does NOT.  But .. subclasses may have overridden this method and can throw exception(s).  Example: org.ASUX.yaml.BatchFileGrammer.java
      */
     @Override
-    protected boolean parseLine() throws Exception
+    protected boolean execBuiltInCommand() throws Exception
     {
-        if ( super.parseLine() )
+        if ( super.execBuiltInCommand() )
             return true; // Don't bother to do anything for lines that are auto-processed internally by super.class
 
-        final String HDR = CLASSNAME +": parseLine(): ";
+        final String HDR = CLASSNAME +": execBuiltInCommand(): ";
         if ( this.verbose ) System.out.println( HDR + this.getState() );
 
         try {
 
             Pattern sleepPattern = Pattern.compile( REGEXP_SLEEP );
-            Matcher sleepMatcher    = sleepPattern.matcher( this.currentLineAfterMacroEval );
+            Matcher sleepMatcher    = sleepPattern.matcher( super.currentLine() );
             if (sleepMatcher.find()) {
-                if ( this.verbose ) System.out.println( CLASSNAME +": I found the text "+ sleepMatcher.group() +" starting at index "+  sleepMatcher.start() +" and ending at index "+ sleepMatcher.end() );    
-                final int sleepDuration = Integer.parseInt( sleepMatcher.group(1) ); // this.currentLineAfterMacroEval.substring( sleepMatcher.start(), sleepMatcher.end() );
+                if ( this.verbose ) System.out.println( HDR +"I found the text "+ sleepMatcher.group() +" starting at index "+  sleepMatcher.start() +" and ending at index "+ sleepMatcher.end() );
+                final int sleepDuration = Integer.parseInt( sleepMatcher.group(1) ); // super.currentLine().substring( sleepMatcher.start(), sleepMatcher.end() );
                 if ( this.verbose ) System.out.println( "\t sleep=[" + sleepDuration +"]" );
                 System.err.println("\n\tsleeping for (seconds) "+ sleepDuration );
                 Thread.sleep( sleepDuration * 1000 );
@@ -183,32 +184,32 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
             }
 
             Pattern setPropPattern = Pattern.compile( REGEXP_SETPROP );
-            Matcher setPropMatcher    = setPropPattern.matcher( this.currentLineAfterMacroEval );
+            Matcher setPropMatcher    = setPropPattern.matcher( super.currentLine() );
             if (setPropMatcher.find()) {
-                if ( this.verbose ) System.out.println( CLASSNAME +": I found the text "+ setPropMatcher.group() +" starting at index "+  setPropMatcher.start() +" and ending at index "+ setPropMatcher.end() );    
+                if ( this.verbose ) System.out.println( HDR +"I found the text "+ setPropMatcher.group() +" starting at index "+  setPropMatcher.start() +" and ending at index "+ setPropMatcher.end() );
                 String key = setPropMatcher.group(1);
                 String val = setPropMatcher.group(2);
                 if ( this.verbose ) System.out.println( "\t KVPair=[" + key +","+ val +"]" );
-                key = Macros.evalThoroughly( this.verbose, key, this.allProps );
-                val = Macros.evalThoroughly( this.verbose, val, this.allProps );
-                final Properties globalVariables = this.allProps.get( GLOBALVARIABLES );
+                key = Macros.evalThoroughly( this.verbose, key, this.propsSetRef );
+                val = Macros.evalThoroughly( this.verbose, val, this.propsSetRef );
+                final Properties globalVariables = this.propsSetRef.get( GLOBALVARIABLES );
                 globalVariables.setProperty( key, val );
-                if ( this.verbose ) new Debug(this.verbose).printAllProps( "<<<<<<<<<<<<<<<<<<<<<<<<", this.propsSetRef );
+                if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +" FULL DUMP of this.propsSetRef = ", this.propsSetRef );
 				return true;
             }
 
             Pattern propsPattern = Pattern.compile( REGEXP_PROPSFILE );
-            Matcher propsMatcher    = propsPattern.matcher( this.currentLineAfterMacroEval );
+            Matcher propsMatcher    = propsPattern.matcher( super.currentLine() );
             if (propsMatcher.find()) {
-                if ( this.verbose ) System.out.println( CLASSNAME +": I found the text "+ propsMatcher.group() +" starting at index "+  propsMatcher.start() +" and ending at index "+ propsMatcher.end() );    
+                if ( this.verbose ) System.out.println( HDR +"I found the text "+ propsMatcher.group() +" starting at index "+  propsMatcher.start() +" and ending at index "+ propsMatcher.end() );
                 final String key = propsMatcher.group(1);
                 final String val = propsMatcher.group(2);
                 if ( this.verbose ) System.out.println( "\t KVPair=[" + key +","+ val +"]" );
-                final String kwom = Macros.evalThoroughly( this.verbose, key, this.allProps );
-                final String fnwom = Macros.evalThoroughly( this.verbose, val, this.allProps );
+                final String kwom = Macros.evalThoroughly( this.verbose, key, this.propsSetRef );
+                final String fnwom = Macros.evalThoroughly( this.verbose, val, this.propsSetRef );
                 final Properties props = new Properties();
                 props.load( new java.io.FileInputStream( fnwom ) );
-                this.allProps.put( kwom, props ); // This line is the action taken by this 'PropertyFile' line of the batchfile
+                this.propsSetRef.put( kwom, props ); // This line is the action taken by this 'PropertyFile' line of the batchfile
                 if ( this.verbose ) System.out.println( HDR +" properties label=["+ kwom +"] & file-name=["+ fnwom +"].");
 				return true;
             }
@@ -234,9 +235,10 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
      *  @return a deep-cloned copy, created by serializing into a ByteArrayOutputStream and reading it back (leveraging ObjectOutputStream)
      */
     public static ScriptFileScanner deepClone( final ScriptFileScanner _orig ) {
+        assertTrue( _orig != null );
         try {
             final ScriptFileScanner newobj = Utils.deepClone( _orig );
-            newobj.deepCloneFix();
+            newobj.deepCloneFix( _orig );
             return newobj;
         } catch (Exception e) {
 			e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
@@ -264,16 +266,17 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
                 ix ++;
                 verbose = true;
             }
-            final ScriptFileScanner o = new ScriptFileScanner( verbose );
+            final ScriptFileScanner o = new ScriptFileScanner( verbose, new LinkedHashMap<String,Properties>() );
+            o.propsSetRef.put( GLOBALVARIABLES, new Properties() );
             o.openFile( args[ix], true, true );
             while (o.hasNextLine()) {
                 if ( verbose ) System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-                final String s = o.nextLine();
+                System.out.println();
+                // final String s = o.nextLine();
                 // System.out.println( o.current Line() );
-                System.out.println();
-                System.out.println( o.getState() );
-                System.out.println( s );
-                System.out.println();
+                // System.out.println( o.getState() );
+                // System.out.println( s );
+                System.out.println( o.nextLine() );
                 if ( verbose ) System.out.println("________________________________________________________________________________________");
             }
 		} catch (Exception e) {
