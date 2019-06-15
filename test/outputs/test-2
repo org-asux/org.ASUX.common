@@ -1,0 +1,6 @@
+
+aws.sdk --list-regions --double-quote
+
+print -
+
+aws.sdk --list-AZs us-east-1 --single-quote

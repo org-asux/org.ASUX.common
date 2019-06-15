@@ -1,0 +1,28 @@
+line-1
+	Echo: print line-2\n
+line-2
+	Echo: print \n
+
+
+${ASUX::foreach.iteration.value} before setProperty
+	Echo: setProperty foreach.iteration.value=Wow-foreach.iteration.value-is-EVALUATED
+Wow-foreach.iteration.value-is-EVALUATED 
+	Echo (As-Is): print ${ASUX::foreach.iteration.value} \n
+	Echo (Macros-substituted): print Wow-foreach.iteration.value-is-EVALUATED \n
+Wow-foreach.iteration.value-is-EVALUATED 
+
+. . . 
+	Echo: print -
+print -
+Subscript-AAAAAAAAAAAAAAAAAAAAAAA
+
+print -
+Within subscript, evaluating macro VALUE1
+	Echo: print Subscript-last\n
+Subscript-last
+
+	sleeping for (seconds) 2
+
+	Echo: unknown command!!!!!!!!!!
+unknown command!!!!!!!!!!
+lastline-in-TOPMOST-scriptfile
