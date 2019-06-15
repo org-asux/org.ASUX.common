@@ -32,6 +32,13 @@
 
 package org.ASUX.common;
 
+import java.util.regex.*;
+import java.util.Scanner;
+import java.util.Properties;
+
+import java.io.StringReader;
+import java.io.PrintStream;
+
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;
@@ -60,6 +67,7 @@ public class Utils {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(_orig);
+            oos.flush();
             
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             ObjectInputStream ois = new ObjectInputStream(bais);
@@ -69,13 +77,55 @@ public class Utils {
         } catch (ClassNotFoundException e) {
             e.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this method
             System.err.println( errmsg +"\n"+ e );
+            System.exit(133);
             throw e;
         } catch (java.io.IOException e) {
             e.printStackTrace(System.err); // Static Method.  Can't see an immediate option to enable levels-of-verbosity for this method
             System.err.println( errmsg +"\n"+ e );
+            System.exit(133);
             throw e;
         }
     }
+
+    //==============================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //==============================================================================
+    public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:_/-]+";
+    public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=("+ REGEXP_SIMPLEWORD +")\\s*$";
+
+    public static Properties parseProperties( final String _s ) throws Exception
+    {
+        final String HDR = CLASSNAME + ": parse(_s): ";
+        final Pattern printPattern = Pattern.compile( REGEXP_KVPAIR ); // Note: A line like 'print -' would FAIL to match \\S.*\\S
+        java.util.Scanner scanner = null;
+        try {
+            final Properties props = new Properties();
+            scanner = new Scanner( _s );
+            scanner.useDelimiter( ";|"+System.lineSeparator() );
+            //---------------------------
+            for ( int ix=1;   scanner.hasNext();   ix++ ) {
+                final String line = scanner.next();
+                // System.out.println( HDR +"line #"+ ix +"="+ line );
+                final Matcher matcher = printPattern.matcher( line );
+                if ( ! matcher.find() )
+                    throw new Exception( HDR +"Not a valid KV-Pair @ line #"+ ix +" = '"+ line +"'" );
+                props.load( new StringReader( line ) );
+            } // for loop
+            // System.out.println( HDR +"# of entries loaded into java.util.Properties = "+ props.size() );
+            // props.list( System.out );
+            return props;
+        } catch(Exception e) {
+            e.printStackTrace( System.err );
+            System.err.println( e.getMessage() );
+        } finally {
+            scanner.close();
+        }
+        return null;
+    }
+
+    //==============================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //==============================================================================
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
