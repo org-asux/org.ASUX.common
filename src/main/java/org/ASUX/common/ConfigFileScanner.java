@@ -112,45 +112,59 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         this.resetFlagsForEachLine();
     }
 
-    //===========================================================================
+    //==============================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //==============================================================================
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine().  But this method is a special deviation, as it allows us to get the 'current-line' over-n-over again.
      *  @return the next string in the list of lines (else an exception is thrown)
      *  @throws Exception in case this class is messed up or hasNextLine() is false or has Not been invoked appropriately
      */
     public String currentLine() throws Exception {
-
-        if ( this.currentLineNum > 0 && this.currentLineNum <= this.lines.size() ) {
-            // return this.nextLine(); // this will Not be null.. just because of the call to hasNextLine() above.
-            return this.lines.get ( this.currentLineNum - 1 );
-        } else {
-            throw new Exception( CLASSNAME +": currentLine(): invalid currentLineNum=" +this.currentLineNum +".  Debug details: state="+ this.getState() );
-        }
+        return ConfigFileScanner.currentLine( this );
     }
 
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine().  But this method is a special deviation, as it allows us to get the 'current-line' over-n-over again.
      *  @return either null (graceful failure) or the next string in the list of lines
      */
     public String currentLineOrNull() {
-        return currentLineOrNull_Impl();
+        return ConfigFileScanner.currentLineOrNull( this );
+    }
+
+    //===========================================================================
+    /**
+     *  <p>This method exists primarily to allow this class to invoke currentLine() (especially for getState()).. without invoking sub-class' overridden version.</p>
+     *  <p>Turns out I need to explicitly call this-specifc method - from within subclasses.  So, you can do that as: ConfigFileScanner.currentLine( this );
+     *  @param __this since this is a static method, pass in 'this' (within the subclasses)
+     *  @throws Exception see {@link #currentLine()}
+     *  @return see {@link #currentLine()}
+     */
+    protected static final String currentLine( final ConfigFileScanner __this ) throws Exception
+    {   final String HDR = CLASSNAME +": (STATIC-METHOD)currentLine(): ";
+        if ( __this.currentLineNum > 0 && __this.currentLineNum <= __this.lines.size() ) {
+            return __this.lines.get ( __this.currentLineNum - 1 );
+        } else {
+            throw new Exception( HDR +": currentLine(): invalid currentLineNum=" +__this.currentLineNum +".  Debug details: state="+ __this.getState() );
+        }
     }
 
     /**
-     * This method exists primarily to allow this class to invoke currentLineOrNull() (especially for getState()).. without invoking sub-class' overridden version.
-     * @return either null (graceful failure) or the next string in the list of lines
+     *  <p>This method exists primarily to allow this class to invoke currentLineOrNull() (especially for getState()).. without invoking sub-class' overridden version.</p>
+     *  <p>Turns out I need to explicitly call this-specifc method - from within subclasses.  So, you can do that as: ConfigFileScanner.currentLineOrNull( this );
+     *  @param __this since this is a static method, pass in 'this' (within the subclasses)
+     * @return see {@link #currentLineOrNull()}
      */
-    private final String currentLineOrNull_Impl()
-    {   // final String HDR = CLASSNAME +": currentLineOrNull_Impl(): ";
-        if ( this.currentLineNum > 0 && this.currentLineNum <= this.lines.size() ) {
-            // return this.nextLine(); // this will Not be null.. just because of the call to hasNextLine() above.
-            return this.lines.get ( this.currentLineNum - 1 );
+    protected static final String currentLineOrNull( final ConfigFileScanner __this )
+    {
+        if ( __this.currentLineNum > 0 && __this.currentLineNum <= __this.lines.size() ) {
+            return __this.lines.get ( __this.currentLineNum - 1 );
         } else {
             return null;
         }
     }
 
-    //===========================================================================
+    //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    //===========================================================================
+    //==============================================================================
 
     /**
      * What was the file that class has ingested for processing
@@ -185,7 +199,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         if ( this.fileName == null || this.currentLineNum <= 0 )
             return "ConfigFile ["+ this.fileName +"] is in invalid state";
         else {
-            final String s = "@ line# "+ this.origLineNumbers.get(this.currentLineNum - 1) +" = ["+ this.currentLineOrNull_Impl() +"]";
+            final String s = "@ line# "+ this.origLineNumbers.get( this.currentLineNum - 1) +" = ["+ ConfigFileScanner.currentLineOrNull( this ) +"]";
             if ( this.fileName.startsWith("@") ) {
                 return "File-name: '"+ this.fileName.substring(1) +"' "+ s;
             } else {
@@ -202,13 +216,24 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      *  @return true or false
      */
     public boolean hasNextLine() {
-        if ( this.lines == null ) return false;
-        if ( this.iterator == null ) {
-            this.rewind();
-        }
-        return this.iterator.hasNext();
+        return ConfigFileScanner.hasNextLine( this );
     }
 
+    /**
+     *  <p>This method exists primarily to allow this class to invoke hasNextLine() (especially for getState()).. without invoking sub-class' overridden version.</p>
+     *  <p>Turns out I need to explicitly call this-specifc method - from within subclasses.  So, you can do that as: ConfigFileScanner.hasNextLine( this );
+     *  @param __this since this is a static method, pass in 'this' (within the subclasses)
+     * @return see {@link #hasNextLine()}
+     */
+    protected static final boolean hasNextLine( final ConfigFileScanner __this )
+    {   // final String HDR = CLASSNAME +": (STATIC-METHOD)hasNextLine(): ";
+        if ( __this.lines == null ) return false;
+        if ( __this.iterator == null )
+            __this.rewind();
+        return __this.iterator.hasNext();
+    }
+
+    //===========================================================================
     /** This class aims to AUGMENTS java.util.Scanner's hasNextLine() and nextLine(), but needs to be used with CAUTION.
      *  @return the next line or NULL
      *  @throws IndexOutOfBoundsException if this method is NOT-PROPERLY called within a loop() based on the conditional: hasNextLine()
@@ -225,24 +250,34 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
      *  @return 0.0001% chance (a.k.a. code bugs) that this is null. Returns the next string in the list of lines
-     *  @throws Exception in case this class is messed up or hasNextLine() is false or has Not been invoked appropriately
+     *  @throws Exception in case subclasses override.. or hasNextLine() is false or has Not been invoked appropriately
      */
     public String nextLine() throws Exception {
-            return nextLineOrNull();
+        return ConfigFileScanner.nextLineOrNull( this );
     }
 
-    //===========================================================================
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine() - but will return null if any errors or invalid sequence of method invocations
      *  @return either null (graceful failure) or the next string in the list of lines
      */
     public String nextLineOrNull() {
-        final String HDR = CLASSNAME +": nextLineOrNull(): ";
-        this.iterator.next();
-        this.currentLineNum ++;
-        resetFlagsForEachLine(); // so that the isXXX() methods invoked of this class -- now that we're on NEW/NEXT line -- will NOT take a shortcut!
+        return ConfigFileScanner.nextLineOrNull( this );
+    }
 
-        if ( this.verbose ) System.out.println( HDR +"\t" + this.getState() );
-        return this.lines.get ( this.currentLineNum - 1 );
+    //===========================================================================
+    /**
+     *  <p>This method is the common implementation body for both nextLine() and nextLineOrNull().</p>
+     *  <p>Turns out I need to explicitly call this.nextLineOrNull() - from within subclasses.  So, you can do that as: ConfigFileScanner.nextLineOrNull( this );
+     *  @param __this since this is a static method, pass in 'this'
+     * @return see {@link #nextLineOrNull()}
+     */
+    protected static final String nextLineOrNull( final ConfigFileScanner __this ) {
+        final String HDR = CLASSNAME +": (STATIC-METHOD)nextLineOrNull(): ";
+        __this.iterator.next();
+        __this.currentLineNum ++;
+        __this.resetFlagsForEachLine(); // so that the isXXX() methods invoked of this class -- now that we're on NEW/NEXT line -- will NOT take a shortcut!
+
+        if ( __this.verbose ) System.out.println( HDR +"\t" + __this.getState() );
+        return __this.lines.get ( __this.currentLineNum - 1 );
     }
 
     //==============================================================================
@@ -272,8 +307,11 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
             if ( this.fileName.startsWith("@") ) {
                 final java.io.InputStream istrm = new java.io.FileInputStream( this.fileName.substring(1) );
                 scanner = new java.util.Scanner( istrm );
+                scanner.useDelimiter( System.lineSeparator() );
             } else {
                 scanner = new java.util.Scanner( this.fileName ); // what I thought was filename is actually INLINE-CONTENT to parse
+                scanner.useDelimiter(";");
+                if ( this.verbose ) System.out.println( HDR +" using special delimiter for INLINE Batch-commands provided via cmdline" );
             }
 
             if ( this.verbose ) System.out.println( HDR +"successfully opened file [" + this.fileName +"]" );
@@ -289,8 +327,8 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
             // int nonEmptyCmdLinenum = 0;
 
             //---------------------------
-            for ( int origLineNum=1;   scanner.hasNextLine();   origLineNum++ ) {
-                line = scanner.nextLine();
+            for ( int origLineNum=1;   scanner.hasNext();   origLineNum++ ) {
+                line = scanner.next();
 
                 //---------------------------
                 if ( _bCompressWhiteSpace ) {
@@ -371,7 +409,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     public static ConfigFileScanner deepClone( ConfigFileScanner _orig ) {
         try {
             final ConfigFileScanner newobj = Utils.deepClone( _orig );
-            newobj.deepCloneFix();
+            newobj.deepCloneFix( _orig );
             return newobj;
         } catch (Exception e) {
 			e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
@@ -382,7 +420,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     /**
      * In order to allow deepClone() to work seamlessly up and down the class-hierarchy.. I should allow subclasses to EXTEND (Not semantically override) this method.
      */
-    protected void deepCloneFix() {
+    protected void deepCloneFix( final ConfigFileScanner _orig ) {
             // because this class has at least one TRANSIENT class-variable.. ..
             // we need to 'restore' that object's transient variable to a 'replica'
             this.iterator = this.lines.iterator();
