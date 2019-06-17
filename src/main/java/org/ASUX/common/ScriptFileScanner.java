@@ -209,7 +209,12 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
                 final String fnwom = Macros.evalThoroughly( this.verbose, val, this.propsSetRef );
                 final Properties props = new Properties();
                 props.load( new java.io.FileInputStream( fnwom ) );
-                this.propsSetRef.put( kwom, props ); // This line is the action taken by this 'PropertyFile' line of the batchfile
+                final Properties existingPropsObj = this.propsSetRef.get( kwom );
+                if ( this.verbose ) System.out.println( HDR +" FOUND Existing properties under the label=["+ kwom +"].");
+                if ( existingPropsObj == null )
+                    this.propsSetRef.put( kwom, props ); // This line is the action taken by this 'PropertyFile' line of the batchfile
+                else
+                    existingPropsObj.putAll( props );
                 if ( this.verbose ) System.out.println( HDR +" properties label=["+ kwom +"] & file-name=["+ fnwom +"].");
 				return true;
             }
