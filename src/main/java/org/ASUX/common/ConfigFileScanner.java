@@ -214,8 +214,9 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
      *  @return true or false
+     *  throws Exception to enable subclasses to more sophisticated things (like built-in commands) and throw exceptions in that context
      */
-    public boolean hasNextLine() {
+    public boolean hasNextLine() throws Exception {
         return ConfigFileScanner.hasNextLine( this );
     }
 
@@ -290,9 +291,12 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      *  @param _ok2TrimWhiteSpace true or false, whether to REMOVE any leading and trailing whitespace.  Example: For YAML processing, trimming is devastating.
      *  @param _bCompressWhiteSpace whether to replace multiple successive whitespace characters with a single space.
      *  @return true (successful and NO errors) or false (any error or issue/trouble whatsoever)
+     *  @throws java.io.FileNotFoundException If filename passed as '@...' does Not exist.
+     *  @throws java.io.IOException any trouble reding the file passed in as '@...'
      *  @throws java.lang.Exception either this function throws or will return false.
      */
-    public boolean openFile( final String _filename, final boolean _ok2TrimWhiteSpace, final boolean _bCompressWhiteSpace ) throws Exception
+    public boolean openFile( final String _filename, final boolean _ok2TrimWhiteSpace, final boolean _bCompressWhiteSpace )
+                    throws java.io.FileNotFoundException, java.io.IOException, Exception
     {
         final String HDR = CLASSNAME +": openFile("+ _filename +","+ _ok2TrimWhiteSpace +","+ _bCompressWhiteSpace +"): ";
 
@@ -387,10 +391,10 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 			e.printStackTrace(System.err); // PatternSyntaxException! too fatal an error, to allow program/application to continue to run.
 			System.err.println( "\n\n"+ HDR +"Unexpected Internal ERROR, while checking for patterns for line= [" + line +"]. Exception Message: "+ e );
 			System.exit(91); // This is a serious failure. Shouldn't be happening.
-        } catch (java.io.IOException e) {
-            e.printStackTrace(System.err); // IOException! too fatal an error, to allow program/application to continue to run.
-            System.err.println( "\n\n"+ HDR +"Failure to read/write IO for file ["+ this.fileName +"]. Exception Message: "+ e );
-			System.exit(91); // This is a serious failure. Shouldn't be happening.
+        // } catch (java.io.IOException e) {
+        //     e.printStackTrace(System.err); // IOException! too fatal an error, to allow program/application to continue to run.
+        //     System.err.println( "\n\n"+ HDR +"Failure to read/write IO for file ["+ this.fileName +"]. Exception Message: "+ e );
+		// 	System.exit(91); // This is a serious failure. Shouldn't be happening.
         // } catch (Exception e) {
         //     e.printStackTrace(System.err);// General Exception! too fatal an error, to allow program/application to continue to run.
         //     System.err.println( HDR +"Unknown Internal error: "+ e );
