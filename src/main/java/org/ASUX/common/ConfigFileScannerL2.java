@@ -295,11 +295,14 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
 
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
      *  @return true or false
+     *  @throws java.io.FileNotFoundException If we encounter a 'include' built-in command and the filename passed as '@...' does Not exist.
+     *  @throws java.io.IOException If we encounter a 'include' built-in command and there is any trouble reding the included-file passed in as '@...'
+     *  @throws java.lang.Exception either this function throws or will return false.
      */
     @Override
-    public boolean hasNextLine()
+    public boolean hasNextLine() throws java.io.FileNotFoundException, java.io.IOException, Exception
     {   final String HDR = CLASSNAME +": hasNextLine(): ";
-        try {
+        // try {
             while ( super.hasNextLine() ) { // we're going to keep iterating UNTIL we find a line that is __NOT__ a 'print' or 'include' line
 
                 if ( this.includedFileScanner != null ) {
@@ -340,12 +343,12 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
             if ( this.verbose ) System.out.println( HDR +": returning FALSE!" );
             return false; // if we ended the above while-loop, super.hasNextLine() is FALSE!
 
-        } catch (Exception e) {
-            e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
-            System.err.println( "\n\n"+ HDR + " Unexpected Internal ERROR @ " + this.getState() +"." );
-            System.exit(99); // This is a serious failure. Shouldn't be happening.
-            return false;
-        }
+        // } catch (Exception e) {
+        //     e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
+        //     System.err.println( "\n\n"+ HDR + " Unexpected Internal ERROR @ " + this.getState() +"." );
+        //     System.exit(99); // This is a serious failure. Shouldn't be happening.
+        //     return false;
+        // }
     }
 
     //==============================================================================
@@ -459,9 +462,11 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      *  <p>ATTENTION: Safely assume that any 'echo' prefix parsing and any 'print' parsing has happened already in a TRANSAPARENT way.</p>
      *  <p>This method is automatically invoked _WITHIN_ nextLine().  nextLine() is inherited from the parent {@link org.ASUX.common.ConfigFileScanner}.</p>
      *  @return true if all 'normal', and false IF-AND-ONLY-IF any problems (you are advised to throw Exception instead)
+     *  @throws java.io.FileNotFoundException If we encounter a 'include' built-in command and the filename passed as '@...' does Not exist.
+     *  @throws java.io.IOException If we encounter a 'include' built-in command and there is any trouble reding the included-file passed in as '@...'
      *  @throws Exception This class does NOT.  But .. subclasses may have overridden this method and can throw exception(s).  Example: org.ASUX.yaml.BatchFileGrammer.java
      */
-    protected boolean execBuiltInCommand() throws Exception
+    protected boolean execBuiltInCommand() throws java.io.FileNotFoundException, java.io.IOException, Exception
     {
         final String HDR = CLASSNAME +": execBuiltInCommand(): ";
         if ( this.verbose ) System.out.println( HDR + this.getState() +"\n\t\tthis.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
