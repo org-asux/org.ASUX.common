@@ -71,7 +71,7 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     public static final String REGEXP_NAMESUFFIX = "[${}@%a-zA-Z0-9\\.,:_/-]+";
     public static final String REGEXP_NAME = "[a-zA-Z$]" + REGEXP_NAMESUFFIX;
     public static final String REGEXP_FILENAME = "[a-zA-Z$/\\.]" + REGEXP_NAMESUFFIX;
-    public static final String REGEXP_OBJECT_REFERENCE = "[@!]" + REGEXP_FILENAME;
+    public static final String REGEXP_OBJECT_REFERENCE = "[@!][?]?" + REGEXP_FILENAME;
 
     public static final String REGEXP_ECHO = "^\\s*echo\\s+(\\S.*\\S)\\s*$";
     public static final String REGEXP_INCLUDE = "^\\s*include\\s+(" + REGEXP_OBJECT_REFERENCE + ")\\s*$";
