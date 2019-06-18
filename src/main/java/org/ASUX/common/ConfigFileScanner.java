@@ -214,7 +214,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
      *  @return true or false
-     *  throws Exception to enable subclasses to more sophisticated things (like built-in commands) and throw exceptions in that context
+     *  @throws Exception to enable subclasses to more sophisticated things (like built-in commands) and throw exceptions in that context
      */
     public boolean hasNextLine() throws Exception {
         return ConfigFileScanner.hasNextLine( this );
