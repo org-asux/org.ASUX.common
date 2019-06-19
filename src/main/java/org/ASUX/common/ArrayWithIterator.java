@@ -282,7 +282,7 @@ public class ArrayWithIterator<T> implements java.util.Iterator, java.io.Seriali
         if ( ! this.isValid ) return -1;
 
         // there is No reason that this.arraylist.index will be < 0 -- if this instance has this.isValid is true, as we do Not decrement this variable
-        assert( this.indexPtr >= 0 );
+        assertTrue( this.indexPtr >= 0 );
 
         if ( this.indexPtr < this.arraylist.length )
             return this.indexPtr;

@@ -37,6 +37,8 @@ import java.util.Properties;
 
 import java.util.regex.*;
 
+import static org.junit.Assert.*;
+
 /** <p>This class has 2 static methods to make it easy for rest of org.ASUX.yaml libraries to evaluate Macro expressions within YALM content</p>
  */
 public class Macros {
@@ -202,7 +204,7 @@ public class Macros {
 			Pattern macroPatt = Macros.getPattern( _verbose );
 			do {
 				final String prev = retStr;
-				assert( prev != null );
+				assertTrue( prev != null );
 				if ( _verbose ) System.out.println( HDR + "starting iteration with "+ prev );
 
 				retStr = Macros.eval( _verbose, retStr, _props );
@@ -254,7 +256,7 @@ public class Macros {
 			final Pattern macroPattern = Macros.getPattern( _verbose );
 			do {
 				final String prev = retStr;
-				assert( prev != null );
+				assertTrue( prev != null );
 				if ( _verbose ) System.out.println( HDR + "starting iteration with "+ prev );
 
 				// first do a macro-eval using ALL the Properties objects withn _propsSet

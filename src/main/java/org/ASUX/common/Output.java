@@ -259,6 +259,7 @@ public class Output {
 
             @SuppressWarnings("unchecked")
             final LinkedHashMap<String, java.lang.Object> map = (LinkedHashMap<String, java.lang.Object>) o;
+
             if (map.keySet().size() <= 0) return OutputType.Type_LinkedHashMap; // This is the only unclear scenario
 
             if ( map.keySet().size() > 1 ) {
@@ -281,7 +282,7 @@ public class Output {
                     return OutputType.Type_LinkedHashMap; // Its a big goop of data at at least 1 level of NESTED Maps inside it.
 
             } else {
-                // assert:   map.keySet().size() == 1 exactly
+                assertTrue( map.keySet().size() == 1); // better be true - unless the above PAIR of IF-conditions above are messed-with
                 final String k = map.keySet().iterator().next();
                 if ( this.verbose ) System.out.println( CLASSNAME +": getWrappedObjectType(): A single-key LinkedHashMap with k=["+ k +"]" );
                 if ( ( ! ARRAYWRAPPED.equals(k))  &&  (  ! LISTWRAPPED.equals(k)) )
@@ -317,18 +318,20 @@ public class Output {
             return _o;
         } else if ( _o instanceof ArrayList ) {
             return _o;
+
         } else if ( _o instanceof LinkedHashMap) {
 // SHOULD I run Tools.lintRemover() to ensure this object stays 100% conformant withe com.esotericsoftware library usage.???
+
             // let's check if this LinkedHashMap is a 'wrapper' for an object that is Not a LinkedHashMap.
             @SuppressWarnings("unchecked")
             final LinkedHashMap<String, java.lang.Object> map = (LinkedHashMap<String, java.lang.Object>) _o;
-// System.out.println(">>>>>>>>>>>> getTheActualObject(_o): "+_o.toString()+" <<<<<<<");
+
             if ( map.keySet().size() <= 0 ) {
                 return _o; // This is the only unclear scenario.  Perhaps an empty result from a previous command in YAML-Batch?
             } else if ( map.keySet().size() > 1 ) {
                 return _o; // return the originally passed object AS-IS.  It's a full-blown LinkedHashMap!
             } else {
-                // assert:   map.keySet().size() == 1 exactly
+                assertTrue( map.keySet().size() == 1 ); // better be true - unless the above PAIR of IF-conditions above are messed-with
                 // Implies this LinkedHashMap is very likely a SIMPLE Wrapper.
                 final String k = map.keySet().iterator().next();
                 if ( k.startsWith( ASUXKEYWORDFORWRAPPER ) ) {
