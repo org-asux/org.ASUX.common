@@ -36,6 +36,7 @@ import java.util.regex.*;
 import java.util.Scanner;
 import java.util.Properties;
 
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.PrintStream;
 
@@ -50,6 +51,9 @@ import java.io.ObjectInputStream;
 public class Utils {
 
     public static final String CLASSNAME = "org.ASUX.common.Utils";
+
+    public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:_/-]+";
+    public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=['\"]?("+ REGEXP_SIMPLEWORD +")['\"]?\\s*$";
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -90,21 +94,31 @@ public class Utils {
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
-    public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:_/-]+";
-    public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=("+ REGEXP_SIMPLEWORD +")\\s*$";
 
+    /**
+     *  <p>Given an String, read the contents line-by-line (very important if you're aiming for 'multi-line' properties), checks if they are valid KV-pairs, and loads them into a __new__ Properties object.</p>
+     *  <p>Note: you can either pass in a file-name, or an __INLINE__ string with ';' or EOLN character breaking up that INLINE-string into 'lines'</p>
+     *  <p>if the argument passed to this method, starts with '@' then it's treated as a file-name, else .. it's treated as _INLINE__ Properties (example: key1=value1;key2=value2'</p>
+     *  @param _s a NotNull string, if it starts with '@' then it's treated as a file-name, else it's treated as _INLINE__ Properties (example: key1=value1;key2=value2'
+     *  @return a new instance of java.util.Properties() NotNull (if error, you get Exception thrown)
+     *  @throws Exception if the contents fail the RegExp <br><pre>
+                        REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:_/-]+"
+                        REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=("+ REGEXP_SIMPLEWORD +")\\s*$"
+</pre>
+     */
     public static Properties parseProperties( final String _s ) throws Exception
     {
-        final String HDR = CLASSNAME + ": parse(_s): ";
+        final String HDR = CLASSNAME + ": parseProperties(String): ";
         final Pattern printPattern = Pattern.compile( REGEXP_KVPAIR ); // Note: A line like 'print -' would FAIL to match \\S.*\\S
-        java.util.Scanner scanner = null;
+        ConfigFileScannerL2 scanner = null;
         try {
             final Properties props = new Properties();
-            scanner = new Scanner( _s );
+            scanner = new ConfigFileScannerL2( false ); // !!!! ATTENTION. I'm purposefully choosing a constructor that does __NOT__ pass on any set of Properties.
             scanner.useDelimiter( ";|"+System.lineSeparator() );
+            scanner.openFile( _s, /* _ok2TrimWhiteSpace */ true, /* _bCompressWhiteSpace */ true );
             //---------------------------
-            for ( int ix=1;   scanner.hasNext();   ix++ ) {
-                final String line = scanner.next();
+            for ( int ix=1;   scanner.hasNextLine();   ix++ ) {
+                final String line = scanner.nextLine();
                 // System.out.println( HDR +"line #"+ ix +"="+ line );
                 final Matcher matcher = printPattern.matcher( line );
                 if ( ! matcher.find() )
@@ -118,7 +132,7 @@ public class Utils {
             // e.printStackTrace( System.err );
             // System.err.println( e.getMessage() );
         } finally {
-            scanner.close();
+            // scanner.close();
         }
         // return null;
     }
@@ -126,6 +140,49 @@ public class Utils {
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
+
+    /**
+     *  <p>Given an InputStream, read the contents line-by-line (very important if you're aiming for 'multi-line' properties), checks if they are valid KV-pairs, and loads them into a __new__ Properties object.</p>
+     *  <p>Note: for the content read from the InputStream, any ';' or EOLN character will break-up that content into 'lines'</p>
+     * @param _verbose Whether you want deluge of debug-output onto System.out.
+     * @param _istrm a NotNull instance of java.io.Stream
+     * @return a new instance of java.util.Properties() NotNull (if error, you get Exception thrown)
+     * @throws Exception if the contents fail the RegExp <br><pre>
+                        REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:_/-]+"
+                        REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=("+ REGEXP_SIMPLEWORD +")\\s*$"
+</pre>
+     */
+    public static Properties parseProperties( final boolean _verbose, final InputStream _istrm ) throws Exception
+    {
+        final String HDR = CLASSNAME + ": parseProperties(java.io.InputStream): ";
+        final Pattern printPattern = Pattern.compile( REGEXP_KVPAIR ); // Note: A line like 'print -' would FAIL to match \\S.*\\S
+        ConfigFileScannerL2 scanner = null;
+        try {
+            final Properties props = new Properties();
+            scanner = new ConfigFileScannerL2( false ); // !!!! ATTENTION. I'm purposefully choosing a constructor that does __NOT__ pass on any set of Properties.
+            scanner.useDelimiter( ";|"+System.lineSeparator() );
+            scanner.openFile( _istrm, /* _ok2TrimWhiteSpace */ true, /* _bCompressWhiteSpace */ true );
+            //---------------------------
+            for ( int ix=1;   scanner.hasNextLine();   ix++ ) {
+                final String line = scanner.nextLine();
+                if ( _verbose ) System.out.println( HDR +"line #"+ ix +"="+ line );
+                final Matcher matcher = printPattern.matcher( line );
+                if ( ! matcher.find() )
+                    throw new Exception( HDR +"Not a valid KV-Pair @ line #"+ ix +" = '"+ line +"'" );
+                props.load( new StringReader( line ) );
+            } // for loop
+            if ( _verbose ) System.out.println( HDR +"# of entries loaded into java.util.Properties = "+ props.size() );
+            if ( _verbose ) props.list( System.out );
+            return props;
+        } catch(Exception e) {
+            if ( _verbose ) e.printStackTrace( System.err );
+            if ( _verbose ) System.err.println( e.getMessage() );
+            throw e;
+        } finally {
+            // scanner.close();
+        }
+        // return null;
+    }
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
