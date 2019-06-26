@@ -87,11 +87,14 @@ public class OSScriptFileScanner extends ScriptFileScanner {
     /**
      *  <p>Creates a well-initialized list of java.util.Properties objects, for use by Operating-System-linked OSScriptFileScanner or it's subclasses.</p>
      *  <p>Currently, the list is augmented by adding just one new Properties object labelled {@link #SYSTEM_ENV}</p>
-     *  @param _allProps pass in a NotNull object (else NullPointerException is thrown)
+     *  <p>If the instance passed in as argument to this method _ALREADY_ has a Property object labelled {@link #GLOBALVARIABLES}, then no action is taken.</p>
+     *  @param _allProps a NotNull instance (else NullPointerException is thrown)
      *  @return a NotNull object
      */
     public static LinkedHashMap<String,Properties> initProperties( final LinkedHashMap<String,Properties> _allProps ) {
-        _allProps.put( OSScriptFileScanner.SYSTEM_ENV, System.getProperties() );
+        final Properties existing = _allProps.get( OSScriptFileScanner.SYSTEM_ENV );
+        if ( existing == null )
+            _allProps.put( OSScriptFileScanner.SYSTEM_ENV, System.getProperties() );
         return _allProps;
     }
 
