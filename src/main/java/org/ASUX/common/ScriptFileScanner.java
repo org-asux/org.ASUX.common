@@ -37,6 +37,8 @@ import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.Properties;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;
@@ -59,8 +61,8 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
     public static final String CLASSNAME = ScriptFileScanner.class.getName();
 
     public static final String REGEXP_SLEEP = "^\\s*sleep\\s+(\\d\\d*)\\s*$";
-    public static final String REGEXP_SETPROP = "^\\s*setProperty\\s+("+ REGEXP_NAME +")=("+ REGEXP_FILENAME +")\\s*$";
-    public static final String REGEXP_PROPSFILE = "^\\s*properties\\s+("+ REGEXP_NAME +")=("+ REGEXP_FILENAME +")\\s*$";
+    public static final String REGEXP_SETPROP = "^\\s*setProperty\\s+([?]?"+ REGEXP_NAME +")=("+ REGEXP_FILENAME +")\\s*$"; // here the RHS (REGEXP_FILENAME) is a misnomer.  It's static text.
+    public static final String REGEXP_PROPSFILE = "^\\s*properties\\s+("+ REGEXP_NAME +")=([?]?"+ REGEXP_FILENAME +")\\s*$";
 
     public static final String GLOBALVARIABLES = "GLOBAL.VARIABLES";
 
@@ -120,11 +122,25 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
     /**
      *  <p>Creates a well-initialized list of java.util.Properties objects, for use by ScriptFileScanner or it's subclasses.</p>
      *  <p>Currently, the list is just size=1, with the Properties object labelled {@link #GLOBALVARIABLES}</p>
+     *  <p>If the instance passed in as argument to this method _ALREADY_ has a Property object labelled {@link #GLOBALVARIABLES}, then no action is taken.</p>
+     *  @param _allProps a NotNull instance (else NullPointerException is thrown)
+     *  @return a NotNull object
+     */
+    public static LinkedHashMap<String,Properties> initProperties( final LinkedHashMap<String,Properties> _allProps ) {
+        final Properties existing = _allProps.get( GLOBALVARIABLES );
+        if ( existing == null )
+            _allProps.put( GLOBALVARIABLES, new Properties() );
+        return _allProps;
+    }
+
+    /**
+     *  <p>Creates a well-initialized list of java.util.Properties objects, for use by ScriptFileScanner or it's subclasses.</p>
+     *  <p>Currently, the list is just size=1, with the Properties object labelled {@link #GLOBALVARIABLES}</p>
      *  @return a NotNull object
      */
     public static LinkedHashMap<String,Properties> initProperties() {
-        final LinkedHashMap<String,Properties> allProps = new LinkedHashMap<String,Properties>();
-        allProps.put( GLOBALVARIABLES, new Properties() );
+        LinkedHashMap<String,Properties> allProps = new LinkedHashMap<String,Properties>();
+        allProps = ScriptFileScanner.initProperties( allProps );
         return allProps;
     }
 
@@ -187,7 +203,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
             Matcher sleepMatcher    = sleepPattern.matcher( super.currentLine() );
             if (sleepMatcher.find()) {
                 if ( this.verbose ) System.out.println( HDR +"I found the text "+ sleepMatcher.group() +" starting at index "+  sleepMatcher.start() +" and ending at index "+ sleepMatcher.end() );
-                final int sleepDuration = Integer.parseInt( sleepMatcher.group(1) ); // super.currentLine().substring( sleepMatcher.start(), sleepMatcher.end() );
+                final int sleepDuration = Integer.parseInt( sleepMatcher.group(1) ); // super.currentLine().sub string( sleepMatcher.start(), sleepMatcher.end() );
                 if ( this.verbose ) System.out.println( "\t sleep=[" + sleepDuration +"]" );
                 System.err.println("\n\tsleeping for (seconds) "+ sleepDuration );
                 Thread.sleep( sleepDuration * 1000 );
@@ -198,13 +214,28 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
             Matcher setPropMatcher    = setPropPattern.matcher( super.currentLine() );
             if (setPropMatcher.find()) {
                 if ( this.verbose ) System.out.println( HDR +"I found the text "+ setPropMatcher.group() +" starting at index "+  setPropMatcher.start() +" and ending at index "+ setPropMatcher.end() );
-                String key = setPropMatcher.group(1);
-                String val = setPropMatcher.group(2);
-                if ( this.verbose ) System.out.println( "\t KVPair=[" + key +","+ val +"]" );
-                key = Macros.evalThoroughly( this.verbose, key, this.propsSetRef );
-                val = Macros.evalThoroughly( this.verbose, val, this.propsSetRef );
+                final String key = setPropMatcher.group(1);
+                final String val = setPropMatcher.group(2);
+                if ( this.verbose ) System.out.println( "\t detected KVPair=[" + key +","+ val +"]" );
+                String keywom = Macros.evalThoroughly( this.verbose, key, this.propsSetRef );
+                final String valwom = Macros.evalThoroughly( this.verbose, val, this.propsSetRef );
+
+                final boolean bOkIfAlreadyExists = keywom.startsWith("?"); // that is, the script-file line was:- 'properties kwom=?fnwom'
+                keywom = keywom.startsWith("?") ? keywom.substring(1) : keywom; // remove the '?' prefix from file's name/path
                 final Properties globalVariables = this.propsSetRef.get( GLOBALVARIABLES );
-                globalVariables.setProperty( key, val );
+                final String preexisting = globalVariables.getProperty( keywom );
+
+                if ( preexisting != null ) {
+                    if ( bOkIfAlreadyExists ) {
+                        // Do Nothing, as it means:- if we've already defined this property already .. and .. the script-file line was:- 'setProperty ?key=...'
+                        if ( this.verbose ) System.out.println( HDR +"ALREADY EXISTING KVPair: keywom=" + keywom +", pre-existing value="+ preexisting +", - with new-value="+ val +".   But because of '?' prefix to 'key', ignoring "+ super.getState() );
+                    } else {
+                        if ( this.verbose ) System.out.println( HDR +"!! WARNING !! OVERRIDING/OVERWRITING EXISTING KVPair: keywom=" + keywom +", pre-existing value="+ preexisting +", - with new-value="+ val +" .. "+ super.getState() );
+                        globalVariables.setProperty( keywom, val );
+                    }
+                } else { // no pre-existing kvpair with 'key'
+                    globalVariables.setProperty( keywom, val );
+                }
                 if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +" FULL DUMP of this.propsSetRef = ", this.propsSetRef );
 				return true;
             }
@@ -215,18 +246,35 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
                 if ( this.verbose ) System.out.println( HDR +"I found the text "+ propsMatcher.group() +" starting at index "+  propsMatcher.start() +" and ending at index "+ propsMatcher.end() );
                 final String key = propsMatcher.group(1);
                 final String val = propsMatcher.group(2);
-                if ( this.verbose ) System.out.println( "\t KVPair=[" + key +","+ val +"]" );
+                if ( this.verbose ) System.out.println( "\t detected PropsFile-KVPair=[" + key +","+ val +"]" );
                 final String kwom = Macros.evalThoroughly( this.verbose, key, this.propsSetRef );
                 final String fnwom = Macros.evalThoroughly( this.verbose, val, this.propsSetRef );
+
+                final boolean bOkIfNotExists = fnwom.startsWith("?"); // that is, the script-file line was:- 'properties kwom=?fnwom'
+                final String filename = fnwom.startsWith("?") ? fnwom.substring(1) : fnwom; // remove the '?' prefix from file's name/path
+
                 final Properties props = new Properties();
-                props.load( new java.io.FileInputStream( fnwom ) );
+                if ( this.verbose ) System.out.println( HDR +"Checking to see if filename=[" + filename +" exists.. .." );
+                if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +" FULL DUMP of this.propsSetRef = ", this.propsSetRef );
+                final File fileObj = new File ( filename );
+                if ( fileObj.exists() && fileObj.canRead() ) {
+                    props.load( new java.io.FileInputStream( filename ) );
+                } else {
+                    if ( bOkIfNotExists ) {
+                        // Do Nothing, as it means:- if filename does NOT exist.. no problem.
+                        if ( this.verbose ) System.out.println( HDR +"DOES NOT EXIST: filename=[" + filename +" exists.   But because of '?' prefix to filename, ignoring error "+ super.getState() );
+                    } else {
+                        throw new FileNotFoundException("File: "+ filename +" does Not exist.  See "+ super.getState() );
+                    }
+                }
+
                 final Properties existingPropsObj = this.propsSetRef.get( kwom );
                 if ( this.verbose ) System.out.println( HDR +" FOUND Existing properties under the label=["+ kwom +"].");
                 if ( existingPropsObj == null )
                     this.propsSetRef.put( kwom, props ); // This line is the action taken by this 'PropertyFile' line of the batchfile
                 else
                     existingPropsObj.putAll( props );
-                if ( this.verbose ) System.out.println( HDR +" properties label=["+ kwom +"] & file-name=["+ fnwom +"].");
+                if ( this.verbose ) System.out.println( HDR +" properties label=["+ kwom +"] & file-name=["+ filename +"].");
 				return true;
             }
 
