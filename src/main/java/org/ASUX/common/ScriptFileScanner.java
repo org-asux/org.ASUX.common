@@ -63,7 +63,6 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
     public static final String REGEXP_PROPSFILE = "^\\s*properties\\s+("+ REGEXP_NAME +")=("+ REGEXP_FILENAME +")\\s*$";
 
     public static final String GLOBALVARIABLES = "GLOBAL.VARIABLES";
-    public static final String SYSTEM_ENV = "System.env";
 
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     // instance variables.
@@ -81,9 +80,9 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
      */
     public ScriptFileScanner( boolean _verbose ) {
         // this( _verbose, new LinkedHashMap<String,Properties>() );
-        super( _verbose, new LinkedHashMap<String,Properties>() );
+        super( _verbose, ScriptFileScanner.initProperties() );
         // this.all Props = this.props SetRef; // Using a NASTY TRICK - to ensure 2nd parameter of call to super() is the same has RHS on this statement.
-        this.propsSetRef.put( GLOBALVARIABLES, new Properties() );
+        // this.propsSetRef.put( GLOBALVARIABLES, new Properties() );
 assertTrue( false ); // Just to find out ..which code is using this constructor?
         // this.bOwnsLifecycleOfAllProps = true;  // this class _OWNS_ the creation, clear(), destruction of the LinkedHashMap that is pointed to by 'this.all Props'
     }
@@ -105,6 +104,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
         // this.bOwnsLifecycleOfAllProps = false;
     }
 
+    //----------------------------------------------------
     /**
      * All subclasses are required to override this method, especially if they have their own instance-variables
      * @return an object of this ScriptFileScanner.java
@@ -116,6 +116,17 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
+
+    /**
+     *  <p>Creates a well-initialized list of java.util.Properties objects, for use by ScriptFileScanner or it's subclasses.</p>
+     *  <p>Currently, the list is just size=1, with the Properties object labelled {@link #GLOBALVARIABLES}</p>
+     *  @return a NotNull object
+     */
+    public static LinkedHashMap<String,Properties> initProperties() {
+        final LinkedHashMap<String,Properties> allProps = new LinkedHashMap<String,Properties>();
+        allProps.put( GLOBALVARIABLES, new Properties() );
+        return allProps;
+    }
 
     // /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine() and reset().<br>reset() has draconian-implications - as if openConfigFile() was never called!
     //  */
@@ -272,6 +283,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
                 verbose = true;
             }
             final ScriptFileScanner o = new ScriptFileScanner( verbose, new LinkedHashMap<String,Properties>() );
+            o.useDelimiter( ";|"+System.lineSeparator() );
             o.propsSetRef.put( GLOBALVARIABLES, new Properties() );
             o.openFile( args[ix], true, true );
             while (o.hasNextLine()) {
