@@ -62,7 +62,7 @@ import static org.junit.Assert.*;
  * 'print' is MORE SOPHISTICATED and MORE CAPABLE that 'echo' in BASH, /bin/sh, /bin/tcsh</p>
  * <p>In addition, this class offers the ability to evaluate expressions JUST LIKE a Bash or /bin/sh or /bin/tcsh does - if you provide a java.util.Properties instance as constructor-argument.</p>
  */
-public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
+public class ConfigFileScannerL2 extends ConfigFileScanner {
 
     private static final long serialVersionUID = 112L;
     public static final String CLASSNAME = ConfigFileScannerL2.class.getName();
@@ -128,10 +128,12 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
     }
 
     /**
-     * Since this is an abstract class, within execBuiltInCommand() line - when it encounters a 'include @filename' - needs to invoke a constructor that creates a 2nd object
+     *  Within execBuiltInCommand() - when this class encounters a 'include @filename' - needs to invoke a constructor that creates a 2nd object of this class.
      * @return an object of the subclass of this ConfigFileScannerL2.java
      */
-    protected abstract ConfigFileScannerL2 create();
+    protected ConfigFileScannerL2 create() {
+        return new ConfigFileScannerL2( this.verbose, this.propsSetRef );
+    }
 
     // ==============================================================================
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -159,7 +161,7 @@ public abstract class ConfigFileScannerL2 extends ConfigFileScanner {
      */
     @Override
     protected void resetFlagsForEachLine() {
-        // super.resetFlagsForEachLine(); <-- this is: protected abstract in superclass.  So, nothing to invoke.
+        // super.resetFlagsForEachLine(); <-- this is: protected abstract within __superclass__.  So, nothing to invoke.
         this.bLine2bEchoed = false;
         this.currentLineAfterMacroEval = null;
         this.printOutputCmd = false;
