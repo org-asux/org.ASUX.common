@@ -38,6 +38,8 @@ import java.util.regex.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;
@@ -57,7 +59,9 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     //--------------------------------------------------------
     protected final boolean verbose;
 
-    protected String fileName = null;
+    protected Object fileName = null;
+    private String delimiter = System.lineSeparator(); // unlike the other instance variables, this is private, as we have delimiter() and useDelimiter() methods/getter/setter
+
     /** ok2TrimWhiteSpace true or false, whether to REMOVE any leading and trailing whitespace.  Example: For YAML processing, trimming is devastating. */
     protected boolean ok2TrimWhiteSpace = true; // defaults
     /** bCompressWhiteSpace whether to replace multiple successive whitespace characters with a single space. */
@@ -97,6 +101,21 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         this.resetFlagsForEachLine();
     }
 
+    //==============================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //==============================================================================
+
+    /**
+     *  This method is identical to that of java.util.Scanner's <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Scanner.html#delimiter--">delimiter()</a> method.
+     *  @return what is being used.  Default is newline (OS-specific)
+     */
+    public String delimiter() { return this.delimiter; }
+    /**
+     *  This method is identical to that of java.util.Scanner's <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Scanner.html#useDelimiter-java.lang.String-">useDelimiter()</a> method.
+     * @param _s a NotNull String
+     */
+    public void useDelimiter( final String _s ) { this.delimiter = _s; }
+
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     /** This function is exclusively for use within the go() - the primary function within this class - to make this very efficient when responding to the many isXXX() methods in this class.
      */
@@ -115,6 +134,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
+
     /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine().  But this method is a special deviation, as it allows us to get the 'current-line' over-n-over again.
      *  @return the next string in the list of lines (else an exception is thrown)
      *  @throws Exception in case this class is messed up or hasNextLine() is false or has Not been invoked appropriately
@@ -171,7 +191,10 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      * @return the fileName exactly as passed to go() method.
      */
     public String getFileName()  {
-        return this.fileName;
+        if ( this.fileName instanceof String )
+            return this.fileName.toString();
+        else
+            return "@java.io.InputStream.class instance";
     }
 
     /**
@@ -197,13 +220,13 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      */
     public String getState() {
         if ( this.fileName == null || this.currentLineNum <= 0 )
-            return "ConfigFile ["+ this.fileName +"] is in invalid state";
+            return "ConfigFile ["+ this.getFileName() +"] is in invalid state";
         else {
             final String s = "@ line# "+ this.origLineNumbers.get( this.currentLineNum - 1) +" = ["+ ConfigFileScanner.currentLineOrNull( this ) +"]";
-            if ( this.fileName.startsWith("@") ) {
-                return "File-name: '"+ this.fileName.substring(1) +"' "+ s;
+            if ( this.getFileName().startsWith("@") ) {
+                return "File-name: '"+ this.getFileName().substring(1) +"' "+ s;
             } else {
-                return "inline-content provided: '"+ this.fileName +"' "+ s;
+                return "inline-content/InputStream provided: '"+ this.getFileName() +"' "+ s;
             }
         }
     }
@@ -287,7 +310,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
     /** As com.esotericsoftware.yamlBeans has some magic where Keys are NOT strings! ..
      *  In order for me to add new entries to the _map created by that library, I need to go thru hoops.
-     *  @param _filename the full path to the file (don't assume relative paths will work ALL the time)
+     *  @param _input String representing the full-path to the file (don't assume relative paths will work ALL the time), or an __INLINE_STRING__ or .. a NotNull reference to java.io.InputStream
      *  @param _ok2TrimWhiteSpace true or false, whether to REMOVE any leading and trailing whitespace.  Example: For YAML processing, trimming is devastating.
      *  @param _bCompressWhiteSpace whether to replace multiple successive whitespace characters with a single space.
      *  @return true (successful and NO errors) or false (any error or issue/trouble whatsoever)
@@ -295,30 +318,38 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      *  @throws java.io.IOException any trouble reding the file passed in as '@...'
      *  @throws java.lang.Exception either this function throws or will return false.
      */
-    public boolean openFile( final String _filename, final boolean _ok2TrimWhiteSpace, final boolean _bCompressWhiteSpace )
+    public boolean openFile( final Object _input, final boolean _ok2TrimWhiteSpace, final boolean _bCompressWhiteSpace )
                     throws java.io.FileNotFoundException, java.io.IOException, Exception
     {
-        final String HDR = CLASSNAME +": openFile("+ _filename +","+ _ok2TrimWhiteSpace +","+ _bCompressWhiteSpace +"): ";
+        final String HDR = CLASSNAME +": openFile("+ _input +","+ _ok2TrimWhiteSpace +","+ _bCompressWhiteSpace +"): ";
 
         this.ok2TrimWhiteSpace = _ok2TrimWhiteSpace;
         this.bCompressWhiteSpace = _bCompressWhiteSpace;
         this.reset(); // just in case.
-        this.fileName = _filename;
+        this.fileName = _input;
 
         String line = null;
         try {
             java.util.Scanner scanner = null;
-            if ( this.fileName.startsWith("@") ) {
-                final java.io.InputStream istrm = new java.io.FileInputStream( this.fileName.substring(1) );
+            if ( this.fileName.toString().startsWith("@") ) {
+                final InputStream istrm = new FileInputStream( this.fileName.toString().substring(1) );
                 scanner = new java.util.Scanner( istrm );
-                scanner.useDelimiter( System.lineSeparator() );
             } else {
-                scanner = new java.util.Scanner( this.fileName ); // what I thought was filename is actually INLINE-CONTENT to parse
-                scanner.useDelimiter(";");
-                if ( this.verbose ) System.out.println( HDR +" using special delimiter for INLINE Batch-commands provided via cmdline" );
+                if ( this.fileName instanceof String ) {
+                    // what I thought was filename is __ACTUALLY__  __INLINE-CONTENT__ to be parsed as-is
+                    scanner = new java.util.Scanner( this.fileName.toString() );
+                    if ( this.verbose ) System.out.println( HDR +" using special delimiter for INLINE Batch-commands provided via cmdline" );
+                } else if ( this.fileName instanceof InputStream ) {
+                    scanner = new java.util.Scanner( (InputStream) this.fileName );
+                    if ( this.verbose ) System.out.println( HDR +" content provided via java.io.InputStream" );
+                } else {
+                    throw new Exception();
+                }
             }
-
             if ( this.verbose ) System.out.println( HDR +"successfully opened file [" + this.fileName +"]" );
+
+            scanner.useDelimiter( this.delimiter );
+            if ( this.verbose ) System.out.println( HDR +" using special delimiter "+ scanner.delimiter() +" for INLINE Batch-commands provided via cmdline" );
 
             // different way to detect comments, and to remove them.
 			Pattern emptyPattern        = Pattern.compile( "^\\s*$" ); // empty line
