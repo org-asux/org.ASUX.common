@@ -67,16 +67,14 @@ public class ConfigFileScannerL2 extends ConfigFileScanner {
     private static final long serialVersionUID = 112L;
     public static final String CLASSNAME = ConfigFileScannerL2.class.getName();
 
-    public static final String REGEXP_INLINEVALUE = "['\" ${}@%a-zA-Z0-9\\[\\]\\.,:_/-]+";
+    public static final String REGEXP_NAME_PREFIXCHARSET = "a-zA-Z0-9$_/\\.";
     public static final String REGEXP_NAMESUFFIX = "[${}@%a-zA-Z0-9\\.,:_/-]+";
-    public static final String REGEXP_NAME = "[a-zA-Z$]" + REGEXP_NAMESUFFIX;
-    public static final String REGEXP_FILENAME = "[a-zA-Z$/\\.]" + REGEXP_NAMESUFFIX;
-    public static final String REGEXP_OBJECT_REFERENCE = "[@!][?]?" + REGEXP_FILENAME;
+    public static final String REGEXP_NAME = "["+ REGEXP_NAME_PREFIXCHARSET +"]" + REGEXP_NAMESUFFIX;
+    public static final String REGEXP_OBJECT_REFERENCE = "[?]*[@!]" + REGEXP_NAME;
 
     public static final String REGEXP_ECHO = "^\\s*echo\\s+(\\S.*\\S)\\s*$";
     public static final String REGEXP_INCLUDE = "^\\s*include\\s+(" + REGEXP_OBJECT_REFERENCE + ")\\s*$";
     public static final String REGEXP_PRINT = "^\\s*print\\s+(\\S.*\\S|\\.)\\s*$";
-    // public static final String REGEXP_INCLPRNT = "^\\s*(echo\\s+)?(include|print)\\s+.+"; // partial line match only
 
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     // instance variables.
@@ -193,17 +191,10 @@ public class ConfigFileScannerL2 extends ConfigFileScanner {
     @Override
     public String currentLine() throws Exception
     { // !!!!!!!!!!!!!!!!!!!!!! COMPLETELY OVERRIDES Parent Method  // !!!!!!!!!!!!!!!!!!!!!!!!
-        // final String HDR = CLASSNAME + ": currentLine(): ";
-
         if (this.includedFileScanner != null)
             return this.includedFileScanner.currentLine();
 
         return this.currentLineAfterMacroEval;
-        // if (this.isLine2bEchoed() ) {
-        //     return removeEchoPrefix( this.currentLineAfterMacroEval );
-        // } else {
-        //     return this.currentLineAfterMacroEval;
-        // }
     }
 
     //=============================================================================
@@ -217,11 +208,6 @@ public class ConfigFileScannerL2 extends ConfigFileScanner {
             return this.includedFileScanner.currentLineOrNull();
 
         return this.currentLineAfterMacroEval;
-        // if ( this.isLine2bEchoed() ) {
-        //     return removeEchoPrefix( this.currentLineAfterMacroEval );
-        // } else {
-        //     return this.currentLineAfterMacroEval;
-        // }
     }
 
     //===========================================================================
@@ -501,7 +487,7 @@ public class ConfigFileScannerL2 extends ConfigFileScanner {
                 return true; // !!!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!! method returns here.
             }
 
-            // This class did NOT process the current line
+            // if we're here, then this class did NOT process the current line
             return false;
 
         } catch (PatternSyntaxException e) {
@@ -516,8 +502,8 @@ public class ConfigFileScannerL2 extends ConfigFileScanner {
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
-    public void debug() {
-        if ( this.verbose ) new Debug(this.verbose).printAllProps( CLASSNAME +" debug() ################################################################################ ", this.propsSetRef );
+    private void debug() {
+        if ( this.verbose ) new Debug(this.verbose).printAllProps( CLASSNAME +" debug() ___________ ", this.propsSetRef );
     }
 
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -604,14 +590,11 @@ public class ConfigFileScannerL2 extends ConfigFileScanner {
             final ConfigFileScannerL2 o = new TestConfigFileScanner( verbose );
             o.openFile( args[ix], true, true );
             while (o.hasNextLine()) {
-                if ( verbose ) System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
                 final String s = o.nextLine();
                 // System.out.println( o.current Line() );
-                System.out.println();
                 System.out.println( o.getState() );
                 System.out.println( s );
-                System.out.println();
-                if ( verbose ) System.out.println("________________________________________________________________________________________");
+                System.out.println( "\n\n" );
             }
 		} catch (Exception e) {
 			e.printStackTrace(System.err); // main().  For Unit testing
