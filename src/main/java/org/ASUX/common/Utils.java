@@ -108,33 +108,7 @@ public class Utils {
      */
     public static Properties parseProperties( final String _s ) throws Exception
     {
-        final String HDR = CLASSNAME + ": parseProperties(String): ";
-        final Pattern printPattern = Pattern.compile( REGEXP_KVPAIR ); // Note: A line like 'print -' would FAIL to match \\S.*\\S
-        ConfigFileScannerL2 scanner = null;
-        try {
-            final Properties props = new Properties();
-            scanner = new ConfigFileScannerL2( false ); // !!!! ATTENTION. I'm purposefully choosing a constructor that does __NOT__ pass on any set of Properties.
-            scanner.useDelimiter( ";|"+System.lineSeparator() );
-            scanner.openFile( _s, /* _ok2TrimWhiteSpace */ true, /* _bCompressWhiteSpace */ true );
-            //---------------------------
-            for ( int ix=1;   scanner.hasNextLine();   ix++ ) {
-                final String line = scanner.nextLine();
-                // System.out.println( HDR +"line #"+ ix +"="+ line );
-                final Matcher matcher = printPattern.matcher( line );
-                if ( ! matcher.find() )
-                    throw new Exception( HDR +"Not a valid KV-Pair @ line #"+ ix +" = '"+ line +"'" );
-                props.load( new StringReader( line ) );
-            } // for loop
-            // System.out.println( HDR +"# of entries loaded into java.util.Properties = "+ props.size() );
-            // props.list( System.out );
-            return props;
-        // } catch(Exception e) {
-            // e.printStackTrace( System.err );
-            // System.err.println( e.getMessage() );
-        } finally {
-            // scanner.close();
-        }
-        // return null;
+        return parseProperties_commonCode( /* verbose= */ false, _s );
     }
 
     //==============================================================================
@@ -154,14 +128,23 @@ public class Utils {
      */
     public static Properties parseProperties( final boolean _verbose, final InputStream _istrm ) throws Exception
     {
-        final String HDR = CLASSNAME + ": parseProperties(java.io.InputStream): ";
+        return parseProperties_commonCode( _verbose, _istrm );
+    }
+
+    //==============================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //==============================================================================
+
+    private static Properties parseProperties_commonCode( final boolean _verbose, final Object _src ) throws Exception
+    {
+        final String HDR = CLASSNAME + ": parseProperties_commonCode("+ _src.getClass().getName() +"): ";
         final Pattern printPattern = Pattern.compile( REGEXP_KVPAIR ); // Note: A line like 'print -' would FAIL to match \\S.*\\S
         ConfigFileScannerL2 scanner = null;
         try {
             final Properties props = new Properties();
             scanner = new ConfigFileScannerL2( false ); // !!!! ATTENTION. I'm purposefully choosing a constructor that does __NOT__ pass on any set of Properties.
             scanner.useDelimiter( ";|"+System.lineSeparator() );
-            scanner.openFile( _istrm, /* _ok2TrimWhiteSpace */ true, /* _bCompressWhiteSpace */ true );
+            scanner.openFile( _src, /* _ok2TrimWhiteSpace */ true, /* _bCompressWhiteSpace */ true );
             //---------------------------
             for ( int ix=1;   scanner.hasNextLine();   ix++ ) {
                 final String line = scanner.nextLine();
