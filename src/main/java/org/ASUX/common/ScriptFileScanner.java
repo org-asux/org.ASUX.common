@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.Properties;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.FileNotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
@@ -60,18 +61,13 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
     private static final long serialVersionUID = 115L;
     public static final String CLASSNAME = ScriptFileScanner.class.getName();
 
-    public static final String REGEXP_SLEEP = "^\\s*sleep\\s+(\\d\\d*)\\s*$";
-    public static final String REGEXP_SETPROP = "^\\s*setProperty\\s+([?]?"+ REGEXP_NAME +")=("+ REGEXP_FILENAME +")\\s*$"; // here the RHS (REGEXP_FILENAME) is a misnomer.  It's static text.
-    public static final String REGEXP_PROPSFILE = "^\\s*properties\\s+("+ REGEXP_NAME +")=([?]?"+ REGEXP_FILENAME +")\\s*$";
+    public static final String REGEXP_SLEEP     = "^\\s*sleep\\s+(\\d\\d*)\\s*$";
+    public static final String REGEXP_SETPROP	= "^\\s*setProperty\\s+([?]*"+ REGEXP_NAME +")=("+ REGEXP_NAME +")\\s*$"; // here the RHS (REGEXP_FILENAME) is a misnomer.  It's static text.
+    public static final String REGEXP_PROPSFILE	= "^\\s*properties\\s+("+ REGEXP_NAME +")=([?]*"+ REGEXP_NAME +")\\s*$";
 
     public static final String GLOBALVARIABLES = "GLOBAL.VARIABLES";
 
-    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    // instance variables.
-
-    // protected transient final LinkedHashMap<String,Properties> allProps;
-
-    // final protected boolean bOwnsLifecycleOfAllProps;
+    // No Instance variables!
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -81,12 +77,8 @@ public class ScriptFileScanner extends ConfigFileScannerL2 {
      *  @param _verbose Whether you want deluge of debug-output onto System.out.
      */
     public ScriptFileScanner( boolean _verbose ) {
-        // this( _verbose, new LinkedHashMap<String,Properties>() );
         super( _verbose, ScriptFileScanner.initProperties() );
-        // this.all Props = this.props SetRef; // Using a NASTY TRICK - to ensure 2nd parameter of call to super() is the same has RHS on this statement.
-        // this.propsSetRef.put( GLOBALVARIABLES, new Properties() );
 assertTrue( false ); // Just to find out ..which code is using this constructor?
-        // this.bOwnsLifecycleOfAllProps = true;  // this class _OWNS_ the creation, clear(), destruction of the LinkedHashMap that is pointed to by 'this.all Props'
     }
 
     /** <p>The constructor to use - for SHALLOW-cloning an instance of this class.</p>
@@ -96,14 +88,12 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
     public ScriptFileScanner( boolean _verbose, final LinkedHashMap<String,Properties> _propsSet ) {
         super( _verbose, _propsSet );
         assertTrue( _propsSet != null );
-        // this.bOwnsLifecycleOfAllProps = false; // this class DOES NOT own the creation, clear(), destruction of WHAREVER is pointed to by 'this.all Props'
     }
 
     /** Do NOT use.  USE ONLY in emergencies and ONLY IF you know what the fuck you are doing.  No questions will be answered, and NO help will be provided. */
     protected ScriptFileScanner() {
         super();
 assertTrue( false ); // Just to find out ..which code is using this constructor?
-        // this.bOwnsLifecycleOfAllProps = false;
     }
 
     //----------------------------------------------------
@@ -221,7 +211,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
                 final String valwom = Macros.evalThoroughly( this.verbose, val, this.propsSetRef );
 
                 final boolean bOkIfAlreadyExists = keywom.startsWith("?"); // that is, the script-file line was:- 'properties kwom=?fnwom'
-                keywom = keywom.startsWith("?") ? keywom.substring(1) : keywom; // remove the '?' prefix from file's name/path
+                keywom = keywom.startsWith("?") ? keywom.substring(1) : keywom; // remove the '?' prefix from key/lhs string
                 final Properties globalVariables = this.propsSetRef.get( GLOBALVARIABLES );
                 final String preexisting = globalVariables.getProperty( keywom );
 
@@ -258,7 +248,9 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
                 if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +" FULL DUMP of this.propsSetRef = ", this.propsSetRef );
                 final File fileObj = new File ( filename );
                 if ( fileObj.exists() && fileObj.canRead() ) {
-                    props.load( new java.io.FileInputStream( filename ) );
+                    final InputStream istrm = new java.io.FileInputStream( filename );
+                    props.putAll( Utils.parseProperties( this.verbose, istrm ) );
+                    // props.load( new java.io.FileInputStream( filename ) );
                 } else {
                     if ( bOkIfNotExists ) {
                         // Do Nothing, as it means:- if filename does NOT exist.. no problem.
@@ -315,6 +307,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
     //  */
     // protected void deepCloneFix() {
     //         // UNLIKE SUPER-Class .. this CLASS DOES NOT __ANY__ TRANSIENT class-variable.. ..
+    //         // So.. we do NOT need this method defined.
     // }
 
     //==============================================================================
@@ -330,7 +323,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
                 ix ++;
                 verbose = true;
             }
-            final ScriptFileScanner o = new ScriptFileScanner( verbose, new LinkedHashMap<String,Properties>() );
+            final ScriptFileScanner o = new ScriptFileScanner( verbose, ScriptFileScanner.initProperties() );
             o.useDelimiter( ";|"+System.lineSeparator() );
             o.propsSetRef.put( GLOBALVARIABLES, new Properties() );
             o.openFile( args[ix], true, true );
