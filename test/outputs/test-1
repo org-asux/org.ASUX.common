@@ -20,9 +20,16 @@ print -
 Within subscript, evaluating macro VALUE1
 	Echo: print Subscript-last\n
 Subscript-last
+DidISetThisAlready = 1stValue 
+DidISetThisAlready = 1stValue 
 
 	sleeping for (seconds) 2
 
 	Echo: unknown command!!!!!!!!!!
 unknown command!!!!!!!!!!
 lastline-in-TOPMOST-scriptfile
+SomeClient java.io.FileNotFoundException: File: /tmp/no-such-file does Not exist.  See File-name: 'script.txt' @ line# 23 = [properties filename=/tmp/no-such-file]
+	at org.ASUX.common.ScriptFileScanner.execBuiltInCommand(ScriptFileScanner.java:270)
+	at org.ASUX.common.ConfigFileScannerL2.hasNextLine(ConfigFileScannerL2.java:334)
+	at org.ASUX.common.ScriptFileScanner.main(ScriptFileScanner.java:340)
+org.ASUX.common.ScriptFileScanner: main(): Unexpected Internal ERROR, while processing @script.txt]
