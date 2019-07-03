@@ -52,7 +52,7 @@ public class Utils {
 
     public static final String CLASSNAME = "org.ASUX.common.Utils";
 
-    public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:_/-]+";
+    public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:;()%_/|+-]+";
     public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=['\"]?("+ REGEXP_SIMPLEWORD +")['\"]?\\s*$";
 
     //==============================================================================
