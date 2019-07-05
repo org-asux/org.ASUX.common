@@ -135,6 +135,34 @@ public class IOUtils {
         }
     }
 
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
+
+    /**
+     * Given a filename and content, just simply write to file, catch some important exceptions, and still throw Exception.
+     * @param filename a NotNull path to a file
+     * @param content a NotNull content
+     * @throws Exception any errors, whether invalid filename, unable to write to file, etc. ..
+     */
+    public static void write2File( final String filename, final String content) throws Exception
+    {
+        final String HDR = CLASSNAME + ": write2File("+ filename +", <content>): ";
+        try {
+            java.nio.file.Files.write(   java.nio.file.Paths.get( filename ),   content.getBytes()  );
+            System.out.println( "File "+ filename +" created." );
+        // } catch(IOException ioe) {
+        // } catch(IllegalArgumentException ioe) { // thrown by java.nio.file.Paths.get()
+        // } catch(FileSystemNotFoundException ioe) { // thrown by java.nio.file.Paths.get()
+        } catch(java.nio.file.InvalidPathException ipe) {
+            // if ( this.verbose ) ipe.printStackTrace( System.err );
+            // if ( this.verbose ) System.err.println( "\n\n"+ HDR +"Serious internal error: Why would the Path be invalid?" );
+            ipe.printStackTrace( System.err );
+            System.err.println( "\n\n"+ HDR +"!!SERIOUS INTERNAL ERROR!! Why would the Path '"+ filename +"' be invalid?\n\n" );
+            throw ipe;
+        }
+    }
+
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
