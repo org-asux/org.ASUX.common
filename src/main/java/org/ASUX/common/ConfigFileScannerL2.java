@@ -469,11 +469,21 @@ public class ConfigFileScannerL2 extends ConfigFileScanner {
             final Matcher includeMatcher = includePattern.matcher( this.currentLineAfterMacroEval );
             if (includeMatcher.find()) {
                 if ( this.verbose ) System.out.println( HDR +": I found the INCLUDE command: '"+ includeMatcher.group(1) +"' starting at index "+  includeMatcher.start() +" and ending at index "+ includeMatcher.end() );    
-                final String includeFileName = includeMatcher.group(1); // this.currentLineAfterMacroEval.substring( includeMatcher.start(), includeMatcher.end() );
+                String includeFileName = includeMatcher.group(1); // this.currentLineAfterMacroEval.substring( includeMatcher.start(), includeMatcher.end() );
+                if ( this.verbose ) System.out.println( HDR +"includeFileName='"+ includeFileName +"' and includeFileName.startsWith(?)="+ includeFileName.startsWith("?") +" includeFileName.substring(1)='"+ includeFileName.substring(1) + "'" );
+                final boolean bOkIfMissing = includeFileName.startsWith("?"); // that is, the script-file line was:- 'properties kwom=?fnwom'
+                includeFileName = includeFileName.startsWith("?") ? includeFileName.substring(1) : includeFileName; // remove the '?' prefix from key/lhs string
+                if ( this.verbose ) System.out.println( HDR +"includeFileName='"+ includeFileName );
+
                 this.includedFileScanner = this.create();
-                final boolean success = this.includedFileScanner.openFile( includeFileName, this.ok2TrimWhiteSpace, this.bCompressWhiteSpace );
-                if ( ! success )
-                    throw new Exception( "Unknown internal exception opening file: "+ includeFileName );
+                try {
+                    final boolean success = this.includedFileScanner.openFile( includeFileName, this.ok2TrimWhiteSpace, this.bCompressWhiteSpace );
+                    if ( ! success )
+                        throw new Exception( "Unknown internal exception opening file: "+ includeFileName );
+                } catch ( java.io.FileNotFoundException fnfe) {
+                    if (  !   bOkIfMissing )
+                        throw fnfe;
+                }
                 if ( this.verbose ) System.out.println( HDR +"\t INCLUDE # "+ this.includedFileScanner );
                 return true; // !!!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!! method returns here.
             } // if
