@@ -22,9 +22,9 @@ set TESTSRCFLDR=${ORGASUXFLDR}/org.ASUX.common/test
 
 ###------------------------------
 if ( $#argv == 1 ) then
-        set VERBOSE=1
+        set VERBOSE=--verbose
 else
-        unset VERBOSE
+        set VERBOSE=
 endif
 
 chdir ${TESTSRCFLDR}
@@ -42,16 +42,20 @@ mkdir -p ${OUTPUTFLDR}
 
 ###------------------------------
 set JARFLDR=${ORGASUXFLDR}/lib
+set MVNREPO=/Users/Sarma/.m2/repository
 
 #_____ ${JARFLDR}/org.asux.aws-sdk.aws-sdk-1.0.jar
 #_____ ${JARFLDR}/org.asux.yaml.nodeimpl.yaml.nodeimpl-1.0.jar
 #_____ ${JARFLDR}/org.asux.yaml.yaml-1.0.jar
 #_____ ${JARFLDR}/org.asux.yaml.collectionsimpl.yaml.collectionsimpl-1.0.jar
 
-set ASUXCOMMON=${JARFLDR}/org.asux.common.common-1.0.jar
-set ASUXCOMMON=/Users/Sarma/.m2/repository/org/asux/common/1.0/common-1.0.jar
-set COMMONSCLIJAR=${JARFLDR}/commons-cli-1.4.jar
-set JUNITJAR=${JARFLDR}/junit.junit.junit-4.8.2.jar
+# set ASUXCOMMON=${JARFLDR}/org.asux.common.common-1.0.jar
+set ASUXCOMMON=${MVNREPO}/org/asux/common/1.0/common-1.0.jar
+# set COMMONSCLIJAR=${JARFLDR}/commons-cli-1.4.jar
+set COMMONSCLIJAR=${MVNREPO}/commons-cli/commons-cli/1.4/commons-cli-1.4.jar
+# set JUNITJAR=${JARFLDR}/junit.junit.junit-4.8.2.jar
+set JUNITJAR=${MVNREPO}/junit/junit/4.8.2/junit-4.8.2.jar
+
 
 if ( $?CLASSPATH ) then
         setenv CLASSPATH  ${CLASSPATH}:${ASUXCOMMON}:${COMMONSCLIJAR}:${JUNITJAR}
@@ -71,7 +75,7 @@ set TESTNUM=1
 # 1
 set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
 echo $OUTPFILE
-java -cp ${CLASSPATH} org.ASUX.common.ScriptFileScanner @script.txt >&! ${OUTPFILE}
+java -cp ${CLASSPATH} org.ASUX.common.ScriptFileScanner ${VERBOSE} @script.txt >&! ${OUTPFILE}
 diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 
 ###---------------------------------
@@ -79,9 +83,17 @@ diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 @ TESTNUM = $TESTNUM + 1
 set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
 echo $OUTPFILE
-java -cp ${CLASSPATH} org.ASUX.common.ScriptFileScanner 'aws.sdk --list-regions --double-quote; print -; aws.sdk --list-AZs us-east-1 --single-quote' >&! ${OUTPFILE}
+java -cp ${CLASSPATH} org.ASUX.common.ScriptFileScanner ${VERBOSE} 'aws.sdk --list-regions --double-quote; print -; aws.sdk --list-AZs us-east-1 --single-quote' >&! ${OUTPFILE}
 diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 
+###---------------------------------
+# 3
+@ TESTNUM = $TESTNUM + 1
+set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
+echo $OUTPFILE
+java -cp ${CLASSPATH} org.ASUX.common.PropertiesFileScanner ${VERBOSE} @MyProperties.txt >&! ${OUTPFILE}
+diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
+exit 0
 
 #EoInfo
 
