@@ -1,0 +1,6 @@
+InnerVAR5=InnerVALUE5
+include ?@NoSuchFile.txt
+InnerVAR7=InnerENDVALUE7
+
+
+
