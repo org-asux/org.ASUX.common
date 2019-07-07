@@ -49,12 +49,28 @@ import static org.junit.Assert.*;
 
 
 /**
- *  <p>This is part of org.ASUX.common GitHub.com project and the <a href="https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
- *  <p>This class extends {@link org.ASUX.common.ConfigFileScanner}.</p>
- *  <p>These classes together offer a tool-set to help make it very easy to work with the Configuration and Propertyfiles - while making it very human-friendly w.r.t .comments etc...</p>
- *  <p>This specific class offers 'setProperty' as well as 'propertiesFile label=&gt;FILE&lt;' both of which are handled transparently!</p>
- *  <p>Both 'echo' and 'print' may sound similar, but 'print' is the literal-equivalent of 'echo' of BASH /bin/sh /bin/tcsh. So.. why need 'echo'?  Well, 'echo' is more PRIMITIVE.  It shows the command __TO BE__ executed, after ALL MACRO-Replacements.  In that sense, this combination of 'echo' and 'print' is MORE SOPHISTICATED and MORE CAPABLE that 'echo' in BASH, /bin/sh, /bin/tcsh</p>
- *  <p>In addition, this class offers the ability to evaluate expressions JUST LIKE a Bash or /bin/sh or /bin/tcsh does - if you provide a java.util.Properties instance as constructor-argument.</p>
+ *  <p>This is part of org.ASUX.common GitHub.com project and the <a href= "https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
+ *  <p>This class is about creating 'Scripts' that cause Java-code (somewhere) to take action.<br>
+ *     It extends {@link ConfigFileScannerL2}.<br>
+ *     Make sure to read about this parent-class before proceeding within this class!<br>
+ *     This class, it's peers ({@link PropertiesFileScanner}) and its subclasses ({@link OSScriptFileScanner} are key to the org.ASUX projects.</p>
+ *  <p>This class represents a bunch of tools, to help make it easy to work with the <em>Script</em> and <em>property</em> files + allowing those file to be very human-friendly w.r.t .comments, variable-substitutions, etc...</p>
+ *  <p>This class, like BASH and CSH, <b>offers 'built-in' commands</b>.  Specifically,</p>
+ *      <ul><li>'<code>sleep nnn</code> (seconds)' command </li><li> '<code>setProperty K=V</code>' command </li><li> '<code>properties label=&gt;Properties-FILE&gt;</code>' command. </li></ul>
+ *  <p>(Advanced Developers: see {@link #execBuiltInCommand()}).<br>
+ *     When you loop through the contents using {@link ConfigFileScanner#hasNextLine()} and {@link ConfigFileScanner#nextLine()}, you simply <b>will Not see these built-in</b> commands.<br>
+ *     Example: if you have a Script-file containing <b>just built-in</b> commands, then your invocation of {@link ConfigFileScanner#hasNextLine()} will never be true!<br>
+ *     Example: See the file <code>test/script.txt</code> in this project folder.</p>
+ *  <p>The '<b><code>properties label=&gt;FILE&gt;</code></b>' allows you to load <b><em><code>Key=Value</code></em> content from</b> a java.util.Properties compatible-file, and store that Properties-content under a 'label'!<br>
+ *     That means you can have ${ASUX::VariableName} evaluate to different values based on which java.util.Properties file got loaded first. So, be alert!<br>
+ *     <b>To simply our lives, always use</b> {@link #GLOBALVARIABLES} (=== 'GLOBAL.VARIABLES') as the <b>label</b> for the <code>properties</code> built-in command.<br>
+ *     A <b>future enhancement</b> will allow you to do: ${ASUX::label::VariableName}.  Not available for now!</p>
+ *  <p><b>ATTENTION: (repeating from parent-class documentation) You must use the '<code>ASUX::</code>' prefix, or the variable-substition will Not happen</b>.<br>
+ *     Why this special-prefix?  Simple reason!  This org.ASUX project demonstrates the need to create Config and Output files that have ${} expressions for <b>other</b> software to use.  A great example: The org.ASUX.AWS and subjects create Confile files containing ${} expressions for AWS CFN-SDK to further parse.</p>
+ *  <p>Finally, any "invalid" command terminates script-processing (just like BASH and CSH do).<br>
+ *     But, you have the sophisticated ability is to safely <b>avoid errors</b>, by putting a '?' prefix for the property and setProperty commands<br>
+ *     '<code>setProperty ?K=V</code>' command means, if 'K' is <b>NOT ALREADY</b> set.. then set K to V.<br>
+ *     '<code>properties label=?&gt;Properties-FILE&gt;</code> command means if the file does NOT exist, don't barf/exit.  Keep quiet about that line, and Keep processing the rest of the Script file.</p>
  */
 public class ScriptFileScanner extends ConfigFileScannerL2 {
 

@@ -48,8 +48,16 @@ import java.io.ObjectInputStream;
 import static org.junit.Assert.*;
 
 /**
- *  <p>This is part of org.ASUX.common GitHub.com project and the <a href="https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
- *  <p>This class is a bunch of tools to help make it easy to work with the Configuration and Propertyfiles - while making it very human-friendly w.r.t .comments etc...</p>
+ *  <p>This is part of org.ASUX.common GitHub.com project and the <a href="https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.<br>
+ *  This class and its subclasses ({@link ScriptFileScanner} and {@link PropertiesFileScanner}) are key to the org.ASUX projects.</p>
+ *  <p><b>Strongly recommend you use  {@link PropertiesFileScanner}, {@link ScriptFileScanner} or  {@link OSScriptFileScanner}</b> instead of this class, unless you need something very specifically limited in capability.</p>
+ *  <p>This class represents a bunch of tools, to help make it easy to work with the <em>Configuration</em> and <em>Property</em> files + allowing those file to be very human-friendly w.r.t .comments etc...<br>
+ *  This class immediately loads the entire contents into Memory ({@link #openFile(Object, boolean, boolean)}), and offers the ability to {@link #deepClone(ConfigFileScanner)} itself (which is a fantastic feature for recursions/loops, as very well demonstrated by subclasses like BatchFileGrammer/BatchFileProcessor of org.ASUX.YAML project).</p>
+ *  <p>This class implements _ONLY_ the line-based interface of java.util.Scanner ({@link #hasNextLine()}, {@link #nextLine()}, {@link #delimiter()}, {@link #useDelimiter(String)}).<br>
+ *    In addition, there are important enhancements like '<em>{@link #currentLine()}, {@link #getCommandCount()}, {@link #getLineNum()}, {@link #getState()}</em>', which help with showing error-messages &amp; stats regarding the Configuration-file being processed.</p>
+ *  <p>In addition, this offers the ability to 'peek ahead' {@link #peekNextLine()}, to see what's on the next line, without have to invoke hasNextLine(), nextLine() .. and the ability to {@link #rewind()} to the beginning of the file and start scanning all over again.  To efficiently re-use Java objects, you can take advantage of {@link #reset()}, which will force you to invoke {@link #openFile(Object, boolean, boolean)} again before you can use an existing object of this class.</p>
+ *  <p>Finally, the class offers you, both the right-way and wrong-way :-) .. to handle errors within Config-files.  For the right-way, it will throw Exceptions (from nextLine(), currentLine()).  ALternatively, if you'd prefer NO Exceptions, and instead prefer to have 'null' returned, you can use the 'NotNull' variant methods: {@link #nextLineOrNull()} and {@link #currentLineOrNull()}</p>
+ *  <p>There are many protected methods (like: ), that can be leveraged by sub-classes.  To better understand how to do that, spend time to understand {@link ConfigFileScannerL2}, {@link PropertiesFileScanner} and {@link ScriptFileScanner}</p>
  */
 public abstract class ConfigFileScanner implements java.io.Serializable {
 
@@ -310,7 +318,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
     /** As com.esotericsoftware.yamlBeans has some magic where Keys are NOT strings! ..
      *  In order for me to add new entries to the _map created by that library, I need to go thru hoops.
-     *  @param _input String representing the full-path to the file (don't assume relative paths will work ALL the time), or an __INLINE_STRING__ or .. a NotNull reference to java.io.InputStream
+     *  @param _input Either it's a java.lang.String representing the full-path to the file (don't assume relative paths will work ALL the time).. or .. an __INLINE_STRING__ content with delimiter() as newlines, or .. a NotNull reference to java.io.InputStream
      *  @param _ok2TrimWhiteSpace true or false, whether to REMOVE any leading and trailing whitespace.  Example: For YAML processing, trimming is devastating.
      *  @param _bCompressWhiteSpace whether to replace multiple successive whitespace characters with a single space.
      *  @return true (successful and NO errors) or false (any error or issue/trouble whatsoever)

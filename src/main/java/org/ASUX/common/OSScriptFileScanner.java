@@ -39,10 +39,16 @@ import static org.junit.Assert.*;
 
 
 /**
- *  <p>This is part of org.ASUX.common GitHub.com project and the <a href="https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
- *  <p>This class extends {@link org.ASUX.common.ScriptFileScanner}.</p>
- *  <p>These classes together offer a tool-set to help make it very easy to work with the Configuration and Propertyfiles - while making it very human-friendly w.r.t .comments etc...</p>
- *  <p>This specific class exists solely to offer you 'System.Environment' as one of the java.util.Properties object under the label="System.env"!</p>
+ *  <p>This is part of org.ASUX.common GitHub.com project and the <a href= "https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
+ *  <p>This class is about creating 'Scripts' that cause Java-code (somewhere) to take action.<br>
+ *     It extends {@link ScriptFileScanner}.<br>
+ *     <b>Make sure to read about this parent-class before proceeding within this class</b>!<br>
+ *     This class, it's peers ({@link PropertiesFileScanner}) are key to the org.ASUX projects.</p>
+ *  <p>This class represents a bunch of tools, to help make it easy to work with the <em>Script</em> and <em>property</em> files + allowing those file to be very human-friendly w.r.t .comments, variable-substitutions, etc...</p>
+ *  <p>This specific class exists solely to <b>automatically load</b> 'System.Environment' as one of the java.util.Properties object under the label="System.env"!</p>
+ *  <p>That means you can have variable-substitions (a.k.a. Macro-variable evaluation) automatically work for ${ASUX::user.home} .. or other System.env entries!</p>
+ *  <p><b>ATTENTION: (repeating from parent-class documentation) You must use the '<code>ASUX::</code>' prefix, or the variable-substition will Not happen</b>.<br>
+ *     Why this special-prefix?  Simple reason!  This org.ASUX project demonstrates the need to create Config and Output files that have ${} expressions for <b>other</b> software to use.  A great example: The org.ASUX.AWS and subjects create Confile files containing ${} expressions for AWS CFN-SDK to further parse.</p>
  */
 public class OSScriptFileScanner extends ScriptFileScanner {
 

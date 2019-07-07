@@ -48,19 +48,23 @@ import java.io.ObjectInputStream;
 import static org.junit.Assert.*;
 
 /**
- * <p>This is part of org.ASUX.common GitHub.com project and the <a href=
- * "https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a>
- * GitHub.com projects.</p>
- * <p>This class extends {@link org.ASUX.common.ConfigFileScanner}.</p>
- * <p>These classes together offer a tool-set to help make it very easy to work
- * with the Configuration and Propertyfiles - while making it very
- * human-friendly w.r.t .comments etc...</p>
- * <p>This specific class offers 'echo' prefix to a line in the FILE, as well as
- * 'include &gt;FILE&gt;' both of which are handled transparently!</p>
- * <p>Both 'echo' and 'print' may sound similar, but 'print' is the literal-equivalent of 'echo' of BASH /bin/sh /bin/tcsh. So.. why need 'echo'?
- * Well, 'echo' is more PRIMITIVE. It shows the command __TO BE__ executed, after ALL MACRO-Replacements. In that sense, this combination of 'echo' and
- * 'print' is MORE SOPHISTICATED and MORE CAPABLE that 'echo' in BASH, /bin/sh, /bin/tcsh</p>
- * <p>In addition, this class offers the ability to evaluate expressions JUST LIKE a Bash or /bin/sh or /bin/tcsh does - if you provide a java.util.Properties instance as constructor-argument.</p>
+ *  <p>This is part of org.ASUX.common GitHub.com project and the <a href= "https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
+ *  <p>This class extends {@link ConfigFileScanner}.<br>
+ *  This class and its subclasses ({@link ScriptFileScanner} are key to the org.ASUX projects.</p>
+ *  <p><b>Strongly recommend you use  {@link PropertiesFileScanner}, {@link ScriptFileScanner} or  {@link OSScriptFileScanner}</b> instead of this class, unless you need something very specifically limited in capability.</p>
+ *  <p>This class represents a bunch of tools, to help make it easy to work with the <em>Configuration</em> and <em>Property</em> files + allowing those file to be very human-friendly w.r.t .comments etc...</p>
+ *  <p>This class, like BASH and CSH, <b>offers 'built-in' commands</b>.  Specifically,<ul><li>'<code>echo</code>' prefix </li><li> '<code>print</code>' command </li><li> '<code>include &gt;FILE&gt;</code>' command. </li></ul>(Advanced Developers: see {@link #execBuiltInCommand()}).<br>
+ *     When you loop through the contents using {@link ConfigFileScanner#hasNextLine()} and {@link ConfigFileScanner#nextLine()}, you simply <b>will Not see these built-in</b> commands.<br>
+ *     Example: if you have a Config-file containing <b>just built-in</b> commands, then your invocation of {@link ConfigFileScanner#hasNextLine()} will never be true!<br>
+ *  <p>The '<b>echo</b>' prefix allows you to SPECIFICALLY see when a line in the Config-file was read/processed</p>
+ *  <p>The '<b><code>include &gt;FILE&gt;</code></b>' (which is allows you to transparently include another file!</p>
+ *  <p>Both 'echo' and 'print' may look identical in function, but 'print' is the <em>semantic-equivalent</em> of either 'System.out.print()' or 'echo' of BASH/ CSH (It includes all '<em>variable-substitution</em>').<br>
+ *     So.. why need 'echo'?<br>
+ *     Well, 'echo' is <b>more PRIMITIVE</b> and very useful for debugging your config-files. 'echo' shows the command __TO BE__ executed, both <b>before</b> and <b>after</b> __ALL__ '<code>${}</code>' MACRO-Replacements (a.k.a. '<em>variable-substitution</em>').<br>
+ *  In that sense, this combination of 'echo' and 'print' is MORE SOPHISTICATED and MORE CAPABLE that the 'echo' built-in command in BASH, /bin/sh, /bin/csh.</p>
+ *  <p>T evaluate variable-substitution expressions <em>JUST LIKE</em> a Bash or /bin/sh or /bin/tcsh does (example: <code>${ASUX::VARIABLE}</code>) - as long as you provide a Not-Null java.util.Properties instance as constructor-argument.</p>
+ *  <p><b>ATTENTION: You must use the '<code>ASUX::</code>' prefix, or the variable-substition will Not happen</b>.<br>
+ *     Why this special-prefix?  Simple reason!  This org.ASUX project demonstrates the need to create Config and Output files that have ${} expressions for <b>other</b> software to use.  A great example: The org.ASUX.AWS and subjects create Confile files containing ${} expressions for AWS CFN-SDK to further parse.</p>
  */
 public class ConfigFileScannerL2 extends ConfigFileScanner {
 
