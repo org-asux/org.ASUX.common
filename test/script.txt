@@ -17,7 +17,7 @@ sleep 2
 echo unknown command!!!!!!!!!!
 print lastline-in-TOPMOST-scriptfile\n
 
-properties file=/Users/Sarma/Documents/Development/src/org.ASUX/AWS/CFN/myjobs/simple/Tags-MyMaster.properties
+properties file=/mnt/development/src/org.ASUX/AWS/CFN/myjobs/simple/Tags-MyMaster.properties
 print ${ASUX::Tag_Client}
 
 properties filename=/tmp/no-such-file
