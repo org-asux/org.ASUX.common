@@ -42,7 +42,7 @@ mkdir -p ${OUTPUTFLDR}
 
 ###------------------------------
 set JARFLDR=${ORGASUXFLDR}/lib
-set MVNREPO=/Users/Sarma/.m2/repository
+set MVNREPO=~/.m2/repository
 
 #_____ ${JARFLDR}/org.asux.aws-sdk.aws-sdk-1.0.jar
 #_____ ${JARFLDR}/org.asux.yaml.nodeimpl.yaml.nodeimpl-1.0.jar
