@@ -15,9 +15,22 @@ echo "Usage: $0 [--verbose]"
 # endif
 
 ###------------------------------
-set ORGASUXFLDR=/mnt/development/src/org.ASUX
-set path=( $path ${ORGASUXFLDR} )
+which asux >& /dev/null
+if ( $status == 0 ) then
+        set ORGASUXFLDR=`which asux`
+        set ORGASUXFLDR=$ORGASUXFLDR:h
+        setenv ORGASUXFLDR $ORGASUXFLDR
+        echo "ORGASUXFLDR=$ORGASUXFLDR"
+else
+        foreach FLDR ( ~/org.ASUX   ~/github/org.ASUX   ~/github.com/org.ASUX  /mnt/development/src/org.ASUX     /opt/org.ASUX  /tmp/org.ASUX  )
+                if ( -e "${FLDR}/asux" ) then
+                        set ORGASUXFLDR="$FLDR"
+                        set path=( $path "${ORGASUXFLDR}" )
+                endif
+        end
+endif
 
+###------------------------------
 set TESTSRCFLDR=${ORGASUXFLDR}/org.ASUX.common/test
 
 ###------------------------------
