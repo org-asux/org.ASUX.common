@@ -239,6 +239,27 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         }
     }
 
+
+    //===========================================================================
+    /**
+     *  <p>Returns what it read into memory (from whatever the source-of-input provided to {@link #openFile(Object, boolean, boolean)}).. as a single string.</p>
+     *  <p>What you'll find most useful is that the delimiters hae been converted into EOLN (platform-specific).<br>
+     *     You can use default delimiter ';' to convert _INLINE_ strings on the command-line into a multi-line input-YAML!</p>
+     *  @return a NotNull String (at a minimum you'll get an empty-string)
+     */
+    @Override
+    public String toString() {
+        if ( this.lines == null || this.lines.size() <= 0 )
+            return "";
+        else {
+            final StringBuffer s = new StringBuffer();
+            for( String line: lines ) {
+                s.append( line ).append( System.lineSeparator() );
+            } // for
+            return s.toString();
+        }
+    }
+
     //===========================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //===========================================================================
