@@ -33,6 +33,10 @@
 package org.ASUX.common;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Properties;
+
+import static org.junit.Assert.*;
 
 /**
  *  Functions to help manipulate Strings
@@ -112,5 +116,34 @@ public class StringUtils {
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
+
+    /**
+     *  <p>Utility function allowing to convert an _INLINE_ String on the command-line, into a multi-line string using ';' delimiter</p>
+     *  <p>There are lots of ways to do this.  but the ability to use 'built-in' commands (of {@link ScriptFileScanner} and {@link ConfigFileScannerL2}) is very valuable for other ASUX.org projects (like org.ASUX.AWS.CFN)</p>
+     *  @param _s a NotNull String utilizing ';' for newline
+     *  @return a NotNull String (at a minimum will be empty-string)
+     *  @throws Exception On errors executing the 'built-in' commands of {@link ScriptFileScanner}, or.. while parsing the String (99.999% UNlikely)
+     */
+    public static String convertString2MultiLine( final String _s ) throws Exception {
+        return convertString2MultiLine( false, _s, new LinkedHashMap<String,Properties>() ); // implemented in ConfigFileScanner.class
+    }
+
+    /**
+     *  <p>Utility function allowing to convert an _INLINE_ String on the command-line, into a multi-line string using ';' delimiter</p>
+     *  <p>There are lots of ways to do this.  but the ability to use 'built-in' commands (of {@link ScriptFileScanner} and {@link ConfigFileScannerL2}) is very valuable for other ASUX.org projects (like org.ASUX.AWS.CFN)</p>
+     *  @param _verbose Whether you want deluge of debug-output onto System.out.
+     *  @param _s a NotNull String utilizing ';' for newline
+     *  @param _propsSet Not-Null.  a REFERENCE to an instance of LinkedHashMap, whose object-lifecycle is maintained by some other class (as in, creating new LinkedHashMap&lt;&gt;(), putting content into it, updating content as File is further processed, ..)
+     *  @return a NotNull String (at a minimum will be empty-string)
+     *  @throws Exception On errors executing the 'built-in' commands of {@link ScriptFileScanner}, or.. while parsing the String (99.999% UNlikely)
+     */
+    public static String convertString2MultiLine( final boolean _verbose, final String _s, LinkedHashMap<String,Properties> _propsSet  ) throws Exception {
+        if ( _propsSet == null )
+            _propsSet = OSScriptFileScanner.initProperties();
+        final ScriptFileScanner scanner = new ScriptFileScanner( _verbose, _propsSet );
+        scanner.useDelimiter( ";|"+System.lineSeparator() );
+        scanner.openFile( _s , true /*_ok2TrimWhiteSpace */, true /* _bCompressWhiteSpace */ );
+        return scanner.toString(); // implemented in ConfigFileScanner.class
+    }
 
 }
