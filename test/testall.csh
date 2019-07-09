@@ -69,7 +69,7 @@ set MVNREPO=~/.m2/repository
 #_____ ${JARFLDR}/org.asux.yaml.collectionsimpl.yaml.collectionsimpl-1.0.jar
 
 # set ASUXCOMMON=${JARFLDR}/org.asux.common.common-1.0.jar
-set ASUXCOMMON=${MVNREPO}/org/asux/common/1.0/common-1.0.jar
+set ASUXCOMMON=${MVNREPO}/org/asux/common/1.1/common-1.1.jar
 # set COMMONSCLIJAR=${JARFLDR}/commons-cli-1.4.jar
 set COMMONSCLIJAR=${MVNREPO}/commons-cli/commons-cli/1.4/commons-cli-1.4.jar
 # set JUNITJAR=${JARFLDR}/junit.junit.junit-4.8.2.jar
