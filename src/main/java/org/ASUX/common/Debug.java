@@ -68,7 +68,7 @@ public class Debug {
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
 
-    public void printAllProps( final String _printPrefix, final LinkedHashMap<String,Properties> _AllProps ) {
+    public static void printAllProps( final String _printPrefix, final LinkedHashMap<String,Properties> _AllProps ) {
         System.out.print( _printPrefix + ": ... "); // _AllProps.forEach( (k, v) -> System.out.println(k + " = " + v.toString() ) );
         for ( String key : _AllProps.keySet() ) {
             System.out.print(key +" = ");
