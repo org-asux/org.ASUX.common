@@ -25,7 +25,7 @@ if (  !   $?ORGASUXFLDR ) then
                 echo "ORGASUXFLDR=$ORGASUXFLDR"
         else
                 foreach FLDR ( ~/org.ASUX   ~/github/org.ASUX   ~/github.com/org.ASUX  /mnt/development/src/org.ASUX     /opt/org.ASUX  /tmp/org.ASUX  )
-                        set ORIGPATH=$path
+                        set ORIGPATH=( $path )
                         if ( -x "${FLDR}/asux" ) then
                                 set ORGASUXFLDR="$FLDR"
                                 set path=( $ORIGPATH "${ORGASUXFLDR}" )
@@ -88,10 +88,12 @@ if ( $?VERBOSE ) echo $CLASSPATH
 set noglob ### Very important to allow us to use '*' character on cmdline arguments
 set noclobber
 
-set TESTNUM=1
+set TESTNUM=0
+
 
 ###---------------------------------
 # 1
+@ TESTNUM = $TESTNUM + 1
 set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
 echo $OUTPFILE
 java -cp ${CLASSPATH} org.ASUX.common.ScriptFileScanner ${VERBOSE} @script.txt >&! ${OUTPFILE}
@@ -112,6 +114,19 @@ set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
 echo $OUTPFILE
 java -cp ${CLASSPATH} org.ASUX.common.PropertiesFileScanner ${VERBOSE} @MyProperties.txt >&! ${OUTPFILE}
 diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
+
+###---------------------------------
+# 4
+@ TESTNUM = $TESTNUM + 1
+set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
+echo $OUTPFILE
+java -cp ${CLASSPATH} -DORGASUXHOME=${ORGASUXFLDR}  -DAWSCFNHOME=${ORGASUXFLDR}/AWS/CFN \
+        org.ASUX.common.PropertiesFileScanner ${VERBOSE} @${ORGASUXFLDR}/AWS/CFN/config/DEFAULTS/Tags-fullstack-vpc-DEFAULTS.properties >&! ${OUTPFILE}
+diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
+
+
+
+###---------------------------------
 exit 0
 
 #EoInfo
