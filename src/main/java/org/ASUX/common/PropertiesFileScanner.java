@@ -101,39 +101,48 @@ public class PropertiesFileScanner extends Properties  {
 
     /**
      *  <p>Fully overridden Method. For use by any Processor of this batch-file.. whether the user added the 'echo' prefix to a command, requesting that that specific line/command be echoed while executing.</p>
-     *  <p>See also {@link #load(String)}</p>
+     *  <p>See also {@link #load(Object)} and {@link #load(Object, LinkedHashMap)}</p>
      *  @param inStream NotNull object (either FileInputStream or ByteArrayInputStream)
      *  @throws IllegalArgumentException - if the input stream contains a malformed Unicode escape sequence.
      *  @throws IOException any issues reading the contents of the Input-String
      */
     @Override
     public void	load( InputStream inStream ) throws IllegalArgumentException, IOException {
-        this.load_commonCode( inStream );
+        this.load( inStream, null );
     }
 
     /**
      *  <p>This is non-standard polymorphism added by org.ASUX toolset, as we allow users to provide Properties separated via semicolon inline on commandline.</p>
      *  <p>See also {@link #load(InputStream)}</p>
-     *  @param _s NotNull string
+     *  @param _s NotNull object (either java.lang.String, FileInputStream or ByteArrayInputStream)
      *  @throws IllegalArgumentException - if the input stream contains a malformed Unicode escape sequence.
      *  @throws IOException any issues reading the contents of the Input-String
      */
-    public void load( final String _s ) throws IllegalArgumentException, IOException {
-        this.load_commonCode( _s );
+    public void load( final Object _s ) throws IllegalArgumentException, IOException {
+        this.load( _s, null );
     }
 
     // ==============================================================================
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     // ==============================================================================
 
-    private void load_commonCode( final Object _src ) throws IllegalArgumentException, IOException
+    /**
+     *  <p>This is a unique ASUX.org enhancement to java.utill.Properties.<br>
+     *      By passing in a "list/set" of Properties (whose lifecycle is managed elsewhere), you can benefit from "Macro-expressions" within the Properties file.</p>
+     *  <p>Example: an property/entry like: <code>fileInUsersHomeFolder=${ASUX::user.home}/filename</code></p>
+     *  @param _src NotNull object (either java.lang.String, FileInputStream or ByteArrayInputStream)
+     *  @param _allProps Null-OK.  a REFERENCE to an instance of LinkedHashMap, whose object-lifecycle is maintained by some other class (as in, creating new LinkedHashMap&lt;&gt;(), putting content into it, updating content as File is further processed, ..)
+     *  @throws IllegalArgumentException in case the Macros within the contents of the Properties file are invalid.
+     *  @throws IOException any trouble reading the "source of data" (_src)
+     */
+    public void load( final Object _src, final LinkedHashMap<String,Properties> _allProps ) throws IllegalArgumentException, IOException
     {
-        final String HDR = CLASSNAME + ": load_commonCode(<inStream>): ";
+        final String HDR = CLASSNAME + ": load(_src,<inStream>): ";
         final Pattern printPattern = Pattern.compile( REGEXP_KVPAIR ); // Note: A line like 'print -' would FAIL to match \\S.*\\S
-        ConfigFileScannerL2 scanner = null;
+        OSScriptFileScanner scanner = null;
         try {
             final Properties props = new Properties();
-            scanner = new ConfigFileScannerL2( false ); // !!!! ATTENTION. I'm purposefully choosing a constructor that does __NOT__ pass on any set of Properties.
+            scanner = new OSScriptFileScanner( this.verbose, _allProps != null ? _allProps : OSScriptFileScanner.initProperties() ); // !!!! ATTENTION. I'm purposefully choosing a constructor that does __NOT__ pass on any set of Properties.
             scanner.useDelimiter( ";|"+System.lineSeparator() );
             scanner.openFile( _src, /* _ok2TrimWhiteSpace */ true, /* _bCompressWhiteSpace */ true );
             //---------------------------
