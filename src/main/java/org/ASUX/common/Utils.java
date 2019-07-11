@@ -32,12 +32,10 @@
 
 package org.ASUX.common;
 
-// import java.util.regex.*;
-// import java.util.Scanner;
+import java.util.LinkedHashMap;
 import java.util.Properties;
 
 import java.io.InputStream;
-// import java.io.StringReader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
@@ -104,9 +102,7 @@ public class Utils {
      */
     public static Properties parseProperties( final String _s ) throws Exception
     {
-        final PropertiesFileScanner props = new PropertiesFileScanner( false );
-        props.load( _s );
-        return props;
+        return parseProperties( false, _s, null );
     }
 
     //==============================================================================
@@ -124,12 +120,30 @@ public class Utils {
                         REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=\\s*['\"]?(.*)['\"]?\\s*$"; // allows for empty string ""
 </pre>
      */
-    public static Properties parseProperties( final boolean _verbose, final InputStream _istrm ) throws Exception
+    public static Properties parseProperties( final boolean _verbose, final InputStream _istrm ) throws Exception {
+        return parseProperties( _verbose, _istrm, null );
+    }
+    //==============================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //==============================================================================
+
+    /**
+     *  <p>Given an InputStream, read the contents line-by-line (very important if you're aiming for 'multi-line' properties), checks if they are valid KV-pairs, and loads them into a __new__ Properties object.</p>
+     *  <p>Note: for the content read from the InputStream, any ';' or EOLN character will break-up that content into 'lines'</p>
+     *  @param _verbose Whether you want deluge of debug-output onto System.out.
+     *  @param _src NotNull object (either java.lang.String, FileInputStream or ByteArrayInputStream)
+     *  @param _allProps Null-OK.  a REFERENCE to an instance of LinkedHashMap, whose object-lifecycle is maintained by some other class (as in, creating new LinkedHashMap&lt;&gt;(), putting content into it, updating content as File is further processed, ..)
+     *  @return a new instance of java.util.Properties() NotNull (if error, you get Exception thrown)
+     *  @throws Exception if the contents fail the RegExp <br><pre>
+                        REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:;()%_/|+ -]+"; // NO Spaces
+                        REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=\\s*['\"]?(.*)['\"]?\\s*$"; // allows for empty string ""
+</pre>
+     */
+    public static Properties parseProperties( final boolean _verbose, final Object _src, final LinkedHashMap<String,Properties> _allProps ) throws Exception
     {
         final PropertiesFileScanner props = new PropertiesFileScanner( false );
-        props.load( _istrm );
+        props.load( _src, _allProps );
         return props;
-        // return parseProperties_commonCode( _verbose, _istrm );
     }
 
     //==============================================================================
