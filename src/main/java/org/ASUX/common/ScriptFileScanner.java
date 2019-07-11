@@ -219,6 +219,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
             Pattern setPropPattern = Pattern.compile( REGEXP_SETPROP );
             Matcher setPropMatcher    = setPropPattern.matcher( super.currentLine() );
             if (setPropMatcher.find()) {
+                if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +"(REGEXP_SETPROP) FULL DUMP of this.propsSetRef = ", this.propsSetRef );
                 if ( this.verbose ) System.out.println( HDR +"I found the text "+ setPropMatcher.group() +" starting at index "+  setPropMatcher.start() +" and ending at index "+ setPropMatcher.end() );
                 final String key = setPropMatcher.group(1);
                 final String val = setPropMatcher.group(2);
@@ -242,13 +243,13 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
                 } else { // no pre-existing kvpair with 'key'
                     globalVariables.setProperty( keywom, val );
                 }
-                if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +" FULL DUMP of this.propsSetRef = ", this.propsSetRef );
 				return true;
             }
 
             Pattern propsPattern = Pattern.compile( REGEXP_PROPSFILE );
             Matcher propsMatcher    = propsPattern.matcher( super.currentLine() );
             if (propsMatcher.find()) {
+                if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +"(REGEXP_PROPSFILE) FULL DUMP of this.propsSetRef = ", this.propsSetRef );
                 if ( this.verbose ) System.out.println( HDR +"I found the text "+ propsMatcher.group() +" starting at index "+  propsMatcher.start() +" and ending at index "+ propsMatcher.end() );
                 final String key = propsMatcher.group(1);
                 final String val = propsMatcher.group(2);
@@ -261,28 +262,34 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
 
                 final Properties props = new Properties();
                 if ( this.verbose ) System.out.println( HDR +"Checking to see if filename=[" + filename +" exists.. .." );
-                if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +" FULL DUMP of this.propsSetRef = ", this.propsSetRef );
                 final File fileObj = new File ( filename );
                 if ( fileObj.exists() && fileObj.canRead() ) {
-                    final InputStream istrm = new java.io.FileInputStream( filename );
-                    props.putAll( Utils.parseProperties( this.verbose, istrm ) );
+                    if ( this.verbose ) System.out.println( HDR +"Filename=[" + fileObj.getAbsolutePath() +"] exists!" );
+                    final InputStream istrm = new java.io.FileInputStream( fileObj );
+                    props.putAll( Utils.parseProperties( this.verbose, istrm, this.propsSetRef ) );
                     // props.load( new java.io.FileInputStream( filename ) );
+                    if ( this.verbose ) System.out.println( HDR +" Loaded following properties, from file-name=["+ fileObj.getAbsolutePath() +"]");
+                    if ( this.verbose ) props.list( System.out );
                 } else {
                     if ( bOkIfNotExists ) {
                         // Do Nothing, as it means:- if filename does NOT exist.. no problem.
-                        if ( this.verbose ) System.out.println( HDR +"DOES NOT EXIST: filename=[" + filename +" exists.   But because of '?' prefix to filename, ignoring error "+ super.getState() );
+                        if ( this.verbose ) System.out.println( HDR +"(REGEXP_PROPSFILE): File DOES NOT EXIST: filename=[" + filename +" exists.   But because of '?' prefix to filename, ignoring error "+ super.getState() );
                     } else {
                         throw new FileNotFoundException("File: "+ filename +" does Not exist.  See "+ super.getState() );
                     }
                 }
 
                 final Properties existingPropsObj = this.propsSetRef.get( kwom );
-                if ( this.verbose ) System.out.println( HDR +" FOUND Existing properties under the label=["+ kwom +"].");
-                if ( existingPropsObj == null )
-                    this.propsSetRef.put( kwom, props ); // This line is the action taken by this 'PropertyFile' line of the batchfile
-                else
+                if ( existingPropsObj != null ) {
+                    if ( this.verbose ) System.out.println( HDR +" FOUND Existing properties under the label=["+ kwom +"]");
+                    if ( this.verbose ) existingPropsObj.list( System.out );
                     existingPropsObj.putAll( props );
-                if ( this.verbose ) System.out.println( HDR +" properties label=["+ kwom +"] & file-name=["+ filename +"].");
+                    // if ( this.verbose ) existingPropsObj.list( System.out );
+                } else {
+                    if ( this.verbose ) System.out.println( HDR +" __NO__ properties under the label=["+ kwom +"]");
+                    this.propsSetRef.put( kwom, props ); // This line is the action taken by this 'PropertyFile' line of the batchfile
+                }
+                if ( this.verbose ) this.propsSetRef.get( kwom ).list( System.out );
 				return true;
             }
 
