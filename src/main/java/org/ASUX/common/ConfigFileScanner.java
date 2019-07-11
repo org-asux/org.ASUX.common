@@ -361,6 +361,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         try {
             java.util.Scanner scanner = null;
             if ( this.fileName.toString().startsWith("@") ) {
+                if ( this.verbose ) System.out.println( HDR +"this.fileName.toString()='"+ this.fileName.toString() +"'" );
                 final InputStream istrm = new FileInputStream( this.fileName.toString().substring(1) );
                 scanner = new java.util.Scanner( istrm );
             } else {
