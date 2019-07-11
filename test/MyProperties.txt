@@ -3,6 +3,6 @@ include ?@NoSuchFile.txt	// Note the '?' Prefix to the filename.  It means if th
 include @MySubProperties.txt
 VAR11=ENDVALUE11
 VAR12=ENDVALUE12
-#___ include @NoSuchFile.txt
+include @MySubProperties.txt
 
 
