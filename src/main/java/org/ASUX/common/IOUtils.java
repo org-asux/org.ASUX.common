@@ -150,7 +150,7 @@ public class IOUtils {
         final String HDR = CLASSNAME + ": write2File("+ filename +", <content>): ";
         try {
             java.nio.file.Files.write(   java.nio.file.Paths.get( filename ),   content.getBytes()  );
-            System.out.println( "File "+ filename +" created." );
+            // System.out.println( "File "+ filename +" created." );
         // } catch(IOException ioe) {
         // } catch(IllegalArgumentException ioe) { // thrown by java.nio.file.Paths.get()
         // } catch(FileSystemNotFoundException ioe) { // thrown by java.nio.file.Paths.get()
