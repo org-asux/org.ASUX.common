@@ -1,0 +1,4 @@
+-- listing properties --
+Tag_ArchLayer=Network
+Tag_Name=VPC-by-ASUX.org-${ASUX::JobSetName}
+Tag_ApplName=NOTRELEVANT_FOR_VPC
