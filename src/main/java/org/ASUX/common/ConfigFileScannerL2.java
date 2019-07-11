@@ -295,7 +295,8 @@ public class ConfigFileScannerL2 extends ConfigFileScanner {
     public boolean hasNextLine() throws java.io.FileNotFoundException, java.io.IOException, Exception
     {   final String HDR = CLASSNAME +": hasNextLine(): ";
         // try {
-            while ( super.hasNextLine() ) { // we're going to keep iterating UNTIL we find a line that is __NOT__ a 'print' or 'include' line
+            while ( super.hasNextLine() ||  ( this.includedFileScanner != null && this.includedFileScanner.hasNextLine() )     ) {
+                // we're going to keep iterating UNTIL we find a line that is __NOT__ a 'print' or 'include' line
 
                 if ( this.includedFileScanner != null ) {
                         final boolean hnl = this.includedFileScanner.hasNextLine();
