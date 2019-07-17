@@ -39,6 +39,8 @@ set OUTPUTFLDR=/tmp/test-output-${PROJECTNAME}
 \rm -rf ${OUTPUTFLDR}
 mkdir -p ${OUTPUTFLDR}
 
+if ( "$VERBOSE" != "" ) echo java -cp ${CLASSPATHCOMMON} org.ASUX.common.ScriptFileScanner ${VERBOSE} @script.txt 
+
 ###------------------------------
 set TESTNUM=0
 
