@@ -170,7 +170,7 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
      */
     @Override
     protected void resetFlagsForEachLine() {
-        final String HDR = this.getHDRPrefix() +": hasNextLine(): ";
+        final String HDR = this.getHDRPrefix() +": resetFlagsForEachLine(): ";
 
         // super.resetFlagsForEachLine(); <-- this is: protected abstract within __superclass__.  So, nothing to invoke.
         if (this.includedFileScanner != null) {
@@ -180,7 +180,7 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
 
         this.bLine2bEchoed = false;
         this.printOutputCmd = false;
-        if ( this.verbose ) System.out.println( HDR + ": resetFlagsForEachLine(): instance-variables are:- "+ this.dump() );
+        if ( this.verbose ) System.out.println( HDR + ": instance-variables are:- "+ this.dump() );
     }
 
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -221,7 +221,9 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
         if (this.includedFileScanner != null)
             return this.includedFileScanner.currentLine();
 
-        return evalMacro( super.currentLine() );
+        final String currLnNoMacro = Macros.evalThoroughly( this.verbose, super.currentLine(), this.propsSetRef );
+        final String nextLn = ConfigFileScannerL3.removeEchoPrefix( currLnNoMacro );
+        return nextLn;
     }
 
     //=============================================================================
@@ -237,7 +239,9 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
             return this.includedFileScanner.currentLineOrNull();
 
         try {
-            return evalMacro( super.currentLineOrNull() );
+            final String currLnNoMacro = Macros.evalThoroughly( this.verbose, super.currentLine(), this.propsSetRef );
+            final String nextLn = ConfigFileScannerL3.removeEchoPrefix( currLnNoMacro );
+            return nextLn;
         } catch (Exception e) {
             if ( this.verbose ) e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
             if ( this.verbose ) System.out.println( HDR +"Ignoring above exception and continuing by returning null" );
@@ -413,13 +417,13 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
             return this.includedFileScanner.nextLine();
         }
 
-        // this.bLine2bEchoed must be set PRIOR to calling evalMacro() 4 lines below.
+        // this.bLine2bEchoed must be set PRIOR to calling evalMacroAndEcho() 4 lines below.
         String nextLn = super.nextLine();
         this.bLine2bEchoed = ConfigFileScannerL3.checkForEchoPrefix( this.verbose, nextLn );
         nextLn = ConfigFileScannerL3.removeEchoPrefix( nextLn );
 
-        // make sure this.bLine2bEchoed has been set before invoking evalMacro()
-        final String currentLineAfterMacroEval = evalMacro( nextLn );
+        // make sure this.bLine2bEchoed has been set before invoking evalMacroAndEcho()
+        final String currentLineAfterMacroEval = evalMacroAndEcho( nextLn );
 
         if ( this.verbose ) System.out.println( HDR +" currentLineAfterMacroEval="+ currentLineAfterMacroEval );
         if ( this.verbose ) System.out.println( HDR +" this.currentLine()="+ super.currentLine() );
@@ -438,13 +442,13 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
             return this.includedFileScanner.nextLineOrNull();
 
         String nextLn = super.nextLineOrNull();
-        // this.bLine2bEchoed must be set PRIOR to calling evalMacro() 4 lines below.
+        // this.bLine2bEchoed must be set PRIOR to calling evalMacroAndEcho() 4 lines below.
         this.bLine2bEchoed = ConfigFileScannerL3.checkForEchoPrefix( this.verbose, nextLn );
         nextLn = ConfigFileScannerL3.removeEchoPrefix( nextLn );
 
         try {
-            // make sure this.bLine2bEchoed has been set before invoking evalMacro()
-            final String currentLineAfterMacroEval = evalMacro( nextLn );
+            // make sure this.bLine2bEchoed has been set before invoking evalMacroAndEcho()
+            final String currentLineAfterMacroEval = evalMacroAndEcho( nextLn );
 
             if ( this.verbose ) System.out.println( HDR +" currentLineAfterMacroEval="+ currentLineAfterMacroEval );
             if ( this.verbose ) System.out.println( HDR +" this.currentLine()="+ super.currentLineOrNull() );
@@ -459,8 +463,8 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
     }
 
     //=============================================================================
-    private String evalMacro( final String preMacroStr ) throws Exception, MacroException
-    {   final String HDR = this.getHDRPrefix() + ": evalMacro(): ";
+    private String evalMacroAndEcho( final String preMacroStr ) throws Exception, MacroException
+    {   final String HDR = this.getHDRPrefix() + ": evalMacroAndEcho(): ";
 
         final String currLnNoMacro = Macros.evalThoroughly( this.verbose, preMacroStr, this.propsSetRef );
         final boolean bNoChange = ( currLnNoMacro == null ) ? (preMacroStr == null): currLnNoMacro.equals( preMacroStr );
