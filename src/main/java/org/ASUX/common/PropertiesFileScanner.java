@@ -155,6 +155,7 @@ public class PropertiesFileScanner extends Properties  {
                 final String key = matcher.group(1);
                 final String val = matcher.group(2);
                 this.setProperty( key, val );
+                if ( this.verbose ) System.out.println( HDR +"Added KV-Pair: "+ key +" = "+ val );
             } // for loop
             if ( this.verbose ) System.out.println( HDR +"# of entries loaded into java.util.Properties = "+ this.size() );
             if ( this.verbose ) super.list( System.out );
