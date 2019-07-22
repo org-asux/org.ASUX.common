@@ -1,6 +1,7 @@
 print line-1\n
 echo print line-2\n
 echo print \n
+include @subscript-ScriptFileScanner.txt
 print \n
 print ${ASUX::foreach.iteration.value} before setProperty\n
 echo setProperty foreach.iteration.value=Wow-foreach.iteration.value-is-EVALUATED
