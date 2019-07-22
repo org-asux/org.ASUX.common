@@ -3,6 +3,11 @@ line-1
 line-2
 	Echo: print \n
 
+This is the 1st line of subscript-ScriptFileScanner.txt
+__________________________ InnerVAR7=InnerENDVALUE7 (must be == InnerENDVALUE7) ___________________________
+NACLRuleNumber = 1100 
+
+yaml lkhdflasdhflasdfhasldkfsaldfhsadlfkjsa /dev/null
 
 ${ASUX::foreach.iteration.value} before setProperty
 	Echo: setProperty foreach.iteration.value=Wow-foreach.iteration.value-is-EVALUATED
@@ -28,8 +33,8 @@ DidISetThisAlready = 1stValue
 	Echo: unknown command!!!!!!!!!!
 unknown command!!!!!!!!!!
 lastline-in-TOPMOST-scriptfile
-SomeClient java.io.FileNotFoundException: File: /tmp/no-such-file does Not exist.  See File-name: 'script.txt' @ line# 23 = [properties filename=/tmp/no-such-file]
-	at org.ASUX.common.ScriptFileScanner.execBuiltInCommand(ScriptFileScanner.java:278)
-	at org.ASUX.common.ConfigFileScannerL2.hasNextLine(ConfigFileScannerL2.java:324)
-	at org.ASUX.common.ScriptFileScanner.main(ScriptFileScanner.java:353)
+SomeClient java.io.FileNotFoundException: File: /tmp/no-such-file does Not exist.  See File-name: 'script.txt' @ line# 24 = [properties filename=/tmp/no-such-file]
+	at org.ASUX.common.ScriptFileScanner.execBuiltInCommand(ScriptFileScanner.java:281)
+	at org.ASUX.common.ConfigFileScannerL3.hasNextLine(ConfigFileScannerL3.java:380)
+	at org.ASUX.common.ScriptFileScanner.main(ScriptFileScanner.java:356)
 org.ASUX.common.ScriptFileScanner: main(): Unexpected Internal ERROR, while processing @script.txt]
