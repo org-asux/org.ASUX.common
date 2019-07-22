@@ -319,6 +319,12 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
         return ConfigFileScanner.nextLineOrNull( this );
     }
 
+    /** This is an enhancement to java.util.Scanner.  It is most useful, to implement FOR Loops or IF-statements (as demonstrated in org.ASUX.YAML.BatchCmdProcessor's skip2MatchingEnd())
+     */
+    public void skipLine() {
+        ConfigFileScanner.nextLineOrNull( this );
+    }
+
     //===========================================================================
     /**
      *  <p>This method is the common implementation body for both nextLine() and nextLineOrNull().</p>
