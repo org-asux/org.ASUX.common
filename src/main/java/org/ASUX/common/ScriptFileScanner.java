@@ -51,7 +51,7 @@ import static org.junit.Assert.*;
 /**
  *  <p>This is part of org.ASUX.common GitHub.com project and the <a href= "https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
  *  <p>This class is about creating 'Scripts' that cause Java-code (somewhere) to take action.<br>
- *     It extends {@link ConfigFileScannerL2}.<br>
+ *     It extends {@link ConfigFileScannerL3}.<br>
  *     Make sure to read about this parent-class before proceeding within this class!<br>
  *     This class, it's peers ({@link PropertiesFileScanner}) and its subclasses ({@link OSScriptFileScanner} are key to the org.ASUX projects.</p>
  *  <p>This class represents a bunch of tools, to help make it easy to work with the <em>Script</em> and <em>property</em> files + allowing those file to be very human-friendly w.r.t .comments, variable-substitutions, etc...</p>
@@ -72,7 +72,7 @@ import static org.junit.Assert.*;
  *     '<code>setProperty ?K=V</code>' command means, if 'K' is <b>NOT ALREADY</b> set.. then set K to V.<br>
  *     '<code>properties label=?&gt;Properties-FILE&gt;</code> command means if the file does NOT exist, don't barf/exit.  Keep quiet about that line, and Keep processing the rest of the Script file.</p>
  */
-public class ScriptFileScanner extends ConfigFileScannerL2 {
+public class ScriptFileScanner extends ConfigFileScannerL3 {
 
     private static final long serialVersionUID = 115L;
     public static final String CLASSNAME = ScriptFileScanner.class.getName();
@@ -190,7 +190,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
 
     /** <p>New Method added to this subclass.  Implement your command parsing and do as appropriate.</p>
      *  <p>ATTENTION: Safely assume that any 'echo' prefix parsing and any 'print' parsing has happened already in a TRANSAPARENT way.</p>
-     *  <p>This method is automatically invoked _WITHIN_ nextLine().  nextLine() is inherited from the parent {@link org.ASUX.common.ConfigFileScannerL2}.</p>
+     *  <p>This method is automatically invoked _WITHIN_ nextLine().  nextLine() is inherited from the parent {@link org.ASUX.common.ConfigFileScannerL3}.</p>
      *  @return true if all 'normal', and false IF-AND-ONLY-IF we hit a 'include @filename' line in the batchfile
      *  @throws Exception This class does NOT.  But .. subclasses may have overridden this method and can throw exception(s).  Example: org.ASUX.yaml.BatchFileGrammer.java
      */
@@ -219,7 +219,7 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
             Pattern setPropPattern = Pattern.compile( REGEXP_SETPROP );
             Matcher setPropMatcher    = setPropPattern.matcher( super.currentLine() );
             if (setPropMatcher.find()) {
-                if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +"(REGEXP_SETPROP) FULL DUMP of this.propsSetRef = ", this.propsSetRef );
+                if ( this.verbose ) Debug.printAllProps( HDR +"(REGEXP_SETPROP) FULL DUMP of this.propsSetRef = ", this.propsSetRef );
                 if ( this.verbose ) System.out.println( HDR +"I found the text "+ setPropMatcher.group() +" starting at index "+  setPropMatcher.start() +" and ending at index "+ setPropMatcher.end() );
                 final String key = setPropMatcher.group(1);
                 final String val = setPropMatcher.group(2);
@@ -249,25 +249,28 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
             Pattern propsPattern = Pattern.compile( REGEXP_PROPSFILE );
             Matcher propsMatcher    = propsPattern.matcher( super.currentLine() );
             if (propsMatcher.find()) {
-                if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +"(REGEXP_PROPSFILE) FULL DUMP of this.propsSetRef = ", this.propsSetRef );
+                if ( this.verbose ) Debug.printAllProps( HDR +"(REGEXP_PROPSFILE) FULL DUMP of this.propsSetRef = ", this.propsSetRef );
                 if ( this.verbose ) System.out.println( HDR +"I found the text "+ propsMatcher.group() +" starting at index "+  propsMatcher.start() +" and ending at index "+ propsMatcher.end() );
                 final String key = propsMatcher.group(1);
                 final String val = propsMatcher.group(2);
                 if ( this.verbose ) System.out.println( "\t detected PropsFile-KVPair=[" + key +","+ val +"]" );
                 final String kwom = Macros.evalThoroughly( this.verbose, key, this.propsSetRef );
-                final String fnwom = Macros.evalThoroughly( this.verbose, val, this.propsSetRef );
+                final String fnwom = Macros.evalThoroughly( this.verbose, val, this.propsSetRef ); // fwom === file-name-without-macros
 
                 final boolean bOkIfNotExists = fnwom.startsWith("?"); // that is, the script-file line was:- 'properties kwom=?fnwom'
-                final String filename = fnwom.startsWith("?") ? fnwom.substring(1) : fnwom; // remove the '?' prefix from file's name/path
+                final String filenameWOAt = fnwom.startsWith("?") ? fnwom.substring(1) : fnwom; // remove the '?' prefix from file's name/path.
+                // 'WOAt' === without-@-symbol ... as,  we're Not sure if there is an '@' prefix (to the file-name).
+
+                final String filename = filenameWOAt.startsWith("@") ? filenameWOAt.substring(1) : filenameWOAt;
 
                 final Properties props = new Properties();
                 if ( this.verbose ) System.out.println( HDR +"Checking to see if filename=[" + filename +" exists.. .." );
                 final File fileObj = new File ( filename );
                 if ( fileObj.exists() && fileObj.canRead() ) {
                     if ( this.verbose ) System.out.println( HDR +"Filename=[" + fileObj.getAbsolutePath() +"] exists!" );
-                    final InputStream istrm = new java.io.FileInputStream( fileObj );
-                    props.putAll( Utils.parseProperties( this.verbose, istrm, this.propsSetRef ) );
-                    // props.load( new java.io.FileInputStream( filename ) );
+                    props.putAll( Utils.parseProperties( this.verbose, "@"+ fileObj.getAbsolutePath(), this.propsSetRef ) );
+                    // Note: ConfigFileScanner and ScriptFileScanners are meant to support INLINE String content (provided via cmdline-line)
+                    // So: Without a '@' prefix, the file-name will be treated as an 'inline-string' (and the file will NOT be opened.)
                     if ( this.verbose ) System.out.println( HDR +" Loaded following properties, from file-name=["+ fileObj.getAbsolutePath() +"]");
                     if ( this.verbose ) props.list( System.out );
                 } else {
