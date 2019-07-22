@@ -65,7 +65,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     public static final String CLASSNAME = ConfigFileScanner.class.getName();
 
     //--------------------------------------------------------
-    protected final boolean verbose;
+    protected boolean verbose;
 
     protected Object fileName = null;
     private String delimiter = System.lineSeparator(); // unlike the other instance variables, this is private, as we have delimiter() and useDelimiter() methods/getter/setter
@@ -123,6 +123,9 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      * @param _s a NotNull String
      */
     public void useDelimiter( final String _s ) { this.delimiter = _s; }
+
+    public boolean getVerbose() {   return this.verbose;    }
+    public void setVerbose( final boolean _verbose ) {  this.verbose = _verbose; }
 
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     /** This function is exclusively for use within the go() - the primary function within this class - to make this very efficient when responding to the many isXXX() methods in this class.
@@ -368,7 +371,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
                 if ( this.fileName instanceof String ) {
                     // what I thought was filename is __ACTUALLY__  __INLINE-CONTENT__ to be parsed as-is
                     scanner = new java.util.Scanner( this.fileName.toString() );
-                    if ( this.verbose ) System.out.println( HDR +" using special delimiter for INLINE Batch-commands provided via cmdline" );
+                    if ( this.verbose ) System.out.println( HDR +" using special delimiter <"+ scanner.delimiter() +"> for INLINE Batch-commands provided via cmdline" );
                 } else if ( this.fileName instanceof InputStream ) {
                     scanner = new java.util.Scanner( (InputStream) this.fileName );
                     if ( this.verbose ) System.out.println( HDR +" content provided via java.io.InputStream" );
@@ -379,7 +382,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
             if ( this.verbose ) System.out.println( HDR +"successfully opened file [" + this.fileName +"]" );
 
             scanner.useDelimiter( this.delimiter );
-            if ( this.verbose ) System.out.println( HDR +" using special delimiter "+ scanner.delimiter() +" for INLINE Batch-commands provided via cmdline" );
+            if ( this.verbose ) System.out.println( HDR +" using special delimiter <"+ scanner.delimiter() +"> for INLINE Batch-commands provided via cmdline" );
 
             // different way to detect comments, and to remove them.
 			Pattern emptyPattern        = Pattern.compile( "^\\s*$" ); // empty line
