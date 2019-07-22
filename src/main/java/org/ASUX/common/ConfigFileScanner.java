@@ -281,7 +281,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      *  @param __this since this is a static method, pass in 'this' (within the subclasses)
      * @return see {@link #hasNextLine()}
      */
-    protected static final boolean hasNextLine( final ConfigFileScanner __this )
+    public static final boolean hasNextLine( final ConfigFileScanner __this )
     {   // final String HDR = CLASSNAME +": (STATIC-METHOD)hasNextLine(): ";
         if ( __this.lines == null ) return false;
         if ( __this.iterator == null )
