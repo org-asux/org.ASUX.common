@@ -49,9 +49,12 @@ import static org.junit.Assert.*;
 
 /**
  *  <p>This is part of org.ASUX.common GitHub.com project and the <a href= "https://github.com/org-asux/org-ASUX.github.io/wiki">org.ASUX.cmdline</a> GitHub.com projects.</p>
+ *  <p><b>Strongly recommend you use  {@link PropertiesFileScanner}, {@link ScriptFileScanner} or  {@link OSScriptFileScanner}</b> instead of this class, unless you need something very specifically limited in capability.</p>
+ *  <p>Compared with {@link ConfigFileScannerL3}, this class will 'fork' itself (in UNIX's Shell-script sense), whenever it encounters an 'include filename' in the batch-script.<br>
+ *      This class is <b>most useful when</b> you'd like the subclasses to be aware of 'built-in' commands.  Not something I'd recommend.<br>
+ *      In fact, {@link PropertiesFileScanner}, {@link ScriptFileScanner} or  {@link OSScriptFileScanner} are all sub-classes of the other {@link ConfigFileScannerL3}.</p>
  *  <p>This class extends {@link ConfigFileScanner}.<br>
  *  This class and its subclasses ({@link ScriptFileScanner} are key to the org.ASUX projects.</p>
- *  <p><b>Strongly recommend you use  {@link PropertiesFileScanner}, {@link ScriptFileScanner} or  {@link OSScriptFileScanner}</b> instead of this class, unless you need something very specifically limited in capability.</p>
  *  <p>This class represents a bunch of tools, to help make it easy to work with the <em>Configuration</em> and <em>Property</em> files + allowing those file to be very human-friendly w.r.t .comments etc...</p>
  *  <p>This class, like BASH and CSH, <b>offers 'built-in' commands</b>.  Specifically,<ul><li>'<code>echo</code>' prefix </li><li> '<code>print</code>' command </li><li> '<code>include &gt;FILE&gt;</code>' command. </li></ul>(Advanced Developers: see {@link #execBuiltInCommand()}).<br>
  *     When you loop through the contents using {@link ConfigFileScanner#hasNextLine()} and {@link ConfigFileScanner#nextLine()}, you simply <b>will Not see these built-in</b> commands.<br>
