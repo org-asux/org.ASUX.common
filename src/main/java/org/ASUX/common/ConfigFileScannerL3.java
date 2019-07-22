@@ -103,9 +103,6 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
      */
     protected ConfigFileScannerL3 includedFileScanner = null;
 
-    //------------
-    private String currentLineAfterMacroEval = null;
-
     // ==============================================================================
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     // ==============================================================================
@@ -182,7 +179,6 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
         }
 
         this.bLine2bEchoed = false;
-        this.currentLineAfterMacroEval = null;
         this.printOutputCmd = false;
         if ( this.verbose ) System.out.println( HDR + ": resetFlagsForEachLine(): instance-variables are:- "+ this.dump() );
     }
@@ -190,7 +186,7 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     private String dump() {
-        return "this.bLine2bEchoed="+ this.bLine2bEchoed +" this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval +" this.printOutputCmd="+ this.printOutputCmd;
+        return "this.bLine2bEchoed="+ this.bLine2bEchoed +" this.printOutputCmd="+ this.printOutputCmd;
     }
 
     // ==============================================================================
@@ -225,7 +221,7 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
         if (this.includedFileScanner != null)
             return this.includedFileScanner.currentLine();
 
-        return this.currentLineAfterMacroEval;
+        return evalMacro( super.currentLine() );
     }
 
     //=============================================================================
@@ -235,10 +231,18 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
     @Override
     public String currentLineOrNull()
     {   // !!!!!!!!!!!!!!!!!!!!!! COMPLETELY OVERRIDES Parent Method !!!!!!!!!!!!!!!!!!!!!!!!
+        final String HDR = this.getHDRPrefix() +": currentLineOrNull(): ";
+
         if ( this.includedFileScanner != null )
             return this.includedFileScanner.currentLineOrNull();
 
-        return this.currentLineAfterMacroEval;
+        try {
+            return evalMacro( super.currentLineOrNull() );
+        } catch (Exception e) {
+            if ( this.verbose ) e.printStackTrace(System.err); // Static Method. So.. can't avoid dumping this on the user.
+            if ( this.verbose ) System.out.println( HDR +"Ignoring above exception and continuing by returning null" );
+            return null;
+        }
     }
 
     //===========================================================================
@@ -308,7 +312,9 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
     }
 
     private String getHDRPrefix() { return CLASSNAME + "("+ super.getFileName() +")"; }
+
     // public boolean getVerbose() {   return this.verbose;    } // Leave this, as defined within 'super' class.
+
     public void setVerbose( final boolean _verbose ) {
         super.setVerbose(_verbose);
         if ( this.includedFileScanner != null )
@@ -364,8 +370,8 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
                         // we peeked (see 4 lines above).
                         // Now, we're 100% sure its a 'print' or 'include' line in the FILE.
                         this.nextLine(); // let's go to the next-line and process that 'print' and 'include' commands.
-// if ( this.verbose ) System.out.println( HDR +"BEFORE execBuiltInCommand() is invoked.. this.currentLineAfterMacroEval="+ s );
-// if ( this.verbose ) System.out.println( HDR +"this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
+// if ( this.verbose ) System.out.println( HDR +"BEFORE execBuiltInCommand() is invoked.. s="+ s );
+// if ( this.verbose ) System.out.println( HDR +"currentLine After MacroEval="+ this.currentLineOrNull() );
 // if ( this.verbose ) new Debug(true).printAllProps( HDR +" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !! <<<<<<<<<<<<<<<<<<<<<<<<<<<< ", this.propsSetRef );
                         final boolean retB = this.execBuiltInCommand(); // this means that we hit a 'include @filename' or 'print ...' line in the batchfile.  So, we need to process-n-skip those lines :-( ugly code.
                         assertTrue( retB == true );
@@ -413,9 +419,9 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
         nextLn = ConfigFileScannerL3.removeEchoPrefix( nextLn );
 
         // make sure this.bLine2bEchoed has been set before invoking evalMacro()
-        this.currentLineAfterMacroEval = evalMacro( nextLn );
+        final String currentLineAfterMacroEval = evalMacro( nextLn );
 
-        if ( this.verbose ) System.out.println( HDR +" this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
+        if ( this.verbose ) System.out.println( HDR +" currentLineAfterMacroEval="+ currentLineAfterMacroEval );
         if ( this.verbose ) System.out.println( HDR +" this.currentLine()="+ super.currentLine() );
         return this.currentLine();
     }
@@ -438,16 +444,17 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
 
         try {
             // make sure this.bLine2bEchoed has been set before invoking evalMacro()
-            this.currentLineAfterMacroEval = evalMacro( nextLn );
+            final String currentLineAfterMacroEval = evalMacro( nextLn );
+
+            if ( this.verbose ) System.out.println( HDR +" currentLineAfterMacroEval="+ currentLineAfterMacroEval );
+            if ( this.verbose ) System.out.println( HDR +" this.currentLine()="+ super.currentLineOrNull() );
+
         } catch (Exception e) {
             // since we shouldn't be getting this error, but .. as we'd like this class to be garbage-in-garbage-out flexible.. let's dump error on the user and return NULL.
             e.printStackTrace(System.err);
             System.err.println( "\n\n"+ HDR + " Unexpected Internal ERROR @ " + this.getState() +"." );
             return null;
         }
-
-        if ( this.verbose ) System.out.println( HDR +" this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
-        if ( this.verbose ) System.out.println( HDR +" this.currentLine()="+ super.currentLineOrNull() );
         return this.currentLineOrNull();
     }
 
@@ -458,7 +465,7 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
         final String currLnNoMacro = Macros.evalThoroughly( this.verbose, preMacroStr, this.propsSetRef );
         final boolean bNoChange = ( currLnNoMacro == null ) ? (preMacroStr == null): currLnNoMacro.equals( preMacroStr );
 // if ( this.verbose ) new Debug(this.verbose).printAllProps( HDR +" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ", this.propsSetRef );
-// if ( this.verbose ) System.out.println( HDR +" this.currentLineAfterMacroEval="+ this.currentLineAfterMacroEval );
+// if ( this.verbose ) System.out.println( HDR +" currentLine After MacroEval="+ this.currentLineOrNull() );
 
         if ( this.verbose ) System.out.println( HDR + "Echo (As-Is): " + preMacroStr);
         if ( this.verbose ) System.out.println( HDR + "Echo (Macros-substituted): " +  currLnNoMacro );
@@ -519,7 +526,7 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
         if ( this.includedFileScanner != null )
             return this.includedFileScanner.execBuiltInCommand();
 
-        final String line = (this.includedFileScanner != null) ?  this.includedFileScanner.currentLineAfterMacroEval : this.currentLineAfterMacroEval;
+        final String line = (this.includedFileScanner != null) ?  this.includedFileScanner.currentLine() : this.currentLine();
 
         if ( this.verbose ) System.out.println( HDR + this.getState() +"\n\t\tline="+ line );
 
