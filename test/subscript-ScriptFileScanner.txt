@@ -1,0 +1,7 @@
+print This is the 1st line of subscript-ScriptFileScanner.txt\n
+properties filename=?/tmp/no-such-file
+properties filename=MyProperties.txt
+print __________________________ InnerVAR7=${ASUX::InnerVAR7} (must be == InnerENDVALUE7) ___________________________\n
+setProperty NACLRuleNumber=1100
+print NACLRuleNumber = ${ASUX::NACLRuleNumber} \n
+yaml lkhdflasdhflasdfhasldkfsaldfhsadlfkjsa /dev/null
