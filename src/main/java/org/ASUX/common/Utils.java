@@ -141,7 +141,7 @@ public class Utils {
      */
     public static Properties parseProperties( final boolean _verbose, final Object _src, final LinkedHashMap<String,Properties> _allProps ) throws Exception
     {
-        final PropertiesFileScanner props = new PropertiesFileScanner( false );
+        final PropertiesFileScanner props = new PropertiesFileScanner( _verbose );
         props.load( _src, _allProps );
         return props;
     }
