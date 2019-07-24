@@ -48,6 +48,8 @@ set TESTNUM=0
 @ TESTNUM = $TESTNUM + 1
 set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
 echo $OUTPFILE
+echo \
+java -cp ${CLASSPATHCOMMON} org.ASUX.common.ScriptFileScanner ${VERBOSE} @script.txt
 java -cp ${CLASSPATHCOMMON} org.ASUX.common.ScriptFileScanner ${VERBOSE} @script.txt >&! ${OUTPFILE}
 diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 
@@ -56,6 +58,8 @@ diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 @ TESTNUM = $TESTNUM + 1
 set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
 echo $OUTPFILE
+echo \
+java -cp ${CLASSPATHCOMMON} org.ASUX.common.ScriptFileScanner ${VERBOSE} 'aws.sdk --list-regions --double-quote; print -; aws.sdk --list-AZs us-east-1 --single-quote'
 java -cp ${CLASSPATHCOMMON} org.ASUX.common.ScriptFileScanner ${VERBOSE} 'aws.sdk --list-regions --double-quote; print -; aws.sdk --list-AZs us-east-1 --single-quote' >&! ${OUTPFILE}
 diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 
@@ -64,6 +68,8 @@ diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 @ TESTNUM = $TESTNUM + 1
 set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
 echo $OUTPFILE
+echo \
+java -cp ${CLASSPATHCOMMON} org.ASUX.common.PropertiesFileScanner ${VERBOSE} @MyProperties.txt
 java -cp ${CLASSPATHCOMMON} org.ASUX.common.PropertiesFileScanner ${VERBOSE} @MyProperties.txt >&! ${OUTPFILE}
 diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 
@@ -72,6 +78,9 @@ diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
 @ TESTNUM = $TESTNUM + 1
 set OUTPFILE=${OUTPUTFLDR}/test-${TESTNUM}
 echo $OUTPFILE
+echo \
+java -cp ${CLASSPATHCOMMON} -DORGASUXHOME=${ORGASUXFLDR}  -DAWSCFNHOME=${ORGASUXFLDR}/AWS/CFN \
+        org.ASUX.common.PropertiesFileScanner ${VERBOSE} @${ORGASUXFLDR}/AWS/CFN/config/DEFAULTS/Tags-fullstack-vpc-DEFAULTS.properties
 java -cp ${CLASSPATHCOMMON} -DORGASUXHOME=${ORGASUXFLDR}  -DAWSCFNHOME=${ORGASUXFLDR}/AWS/CFN \
         org.ASUX.common.PropertiesFileScanner ${VERBOSE} @${ORGASUXFLDR}/AWS/CFN/config/DEFAULTS/Tags-fullstack-vpc-DEFAULTS.properties >&! ${OUTPFILE}
 diff ${OUTPFILE} ${TEMPLATEFLDR}/test-${TESTNUM}
