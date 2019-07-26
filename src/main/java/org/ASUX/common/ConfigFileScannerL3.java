@@ -40,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.Properties;
 
+import java.io.File;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;
@@ -315,9 +316,24 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
             return super.getState();
     }
 
+    //===========================================================================
+
+    /**
+     * This is a debugging tool, to help determine the 'Russian-Doll' situation, when Config-file includes another, which include yet-another, .. .. ..
+     * @return something like: ConfigFile [@mapsBatch1.txt] @ line# 2 = [line contents as-is] .. .. --> .. .. <Repeat> 
+     */
+    protected String getRecursiveState() {
+        if ( this.includedFileScanner == null )
+            return super.getState();
+        else
+            return ConfigFileScanner.getState( this ) + " .. --> .. "+ this.includedFileScanner.getRecursiveState();
+    }
+
+    //===========================================================================
+
     private String getHDRPrefix() { return CLASSNAME + "("+ super.getFileName() +")"; }
 
-    // public boolean getVerbose() {   return this.verbose;    } // Leave this, as defined within 'super' class.
+    //===========================================================================
 
     public void setVerbose( final boolean _verbose ) {
         super.setVerbose(_verbose);
@@ -338,71 +354,110 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
     @Override
     public boolean hasNextLine() throws java.io.FileNotFoundException, java.io.IOException, Exception
     {   final String HDR = this.getHDRPrefix() +": hasNextLine(): ";
-        // try {
-            while ( super.hasNextLine() ||  ( this.includedFileScanner != null && this.includedFileScanner.hasNextLine() )     ) {
-                // we're going to keep iterating UNTIL we find a line that is __NOT__ a 'print' or 'include' line
+        if ( this.verbose ) System.out.println( HDR +" @ Beginning: has includedFileScanner? "+ (this.includedFileScanner!=null) + " .. "+ this.getRecursiveState() );
 
-                if ( this.includedFileScanner != null ) {
-                        final boolean hnl = this.includedFileScanner.hasNextLine();
-                        if ( this.verbose ) System.out.println( HDR +": this.includedFileScanner.hasNextLine()="+ hnl );
-                        if ( hnl ) {
-                            final String nextLineInIncludedFile = this.includedFileScanner.peekNextLine();
-                            if ( this.verbose ) System.out.println( HDR +"this.includedFileScanner says nextLineInIncludedFile=("+ nextLineInIncludedFile +")." );
-                            // Now let's ask the _SUBclasses_ if they've implemented the command in this line, as a built-in-command!
-                            if ( this.isBuiltInCommand( nextLineInIncludedFile ) ) {
-                                if ( this.verbose ) System.out.println( HDR +"confirmed that isBuiltInCommand("+ nextLineInIncludedFile +") is true for _SOME_ _SUBCLASS_. Quietly and transparently processing it." );
-                                this.includedFileScanner.nextLine(); // Now that the built-in command is executed, let's move past that line.
-                                final boolean retB = this.execBuiltInCommand(); // Let the appropriate sub-class quietly/auto-process this line in the batchfile.
-                                assertTrue( retB == true );
-                                continue;  // So, yes, a subclass implemented the command in the current-line as a built-in command!
-                            } else {
-                                if ( this.verbose ) System.out.println( HDR +"NO!! NO!! NO!!  confirmed that this.includedFileScanner.isBuiltInCommand("+ nextLineInIncludedFile +") is FALSE!!!" );
-                                return true; //we're inside the while-loop after passing the while-loop's conditional-expression: super.hasNextLine()
-                            }
-                        } else {
-                            this.includedFileScanner = null; // we're done with the included file!
-                            continue; // Attention!!! Since we are DONE with 'included' file.. we need to look at the next row in _THIS_ file.
-                        }
+        final boolean bInclFileHasNext = ( this.includedFileScanner == null )
+                                        ? false
+                                        : this.includedFileScanner.hasNextLine();
+        if ( bInclFileHasNext ) {
+            return true;
+        } else {
+            // Attention!!! Since we are DONE with 'included' file.. we need to look at the next row in _THIS_ file.
+            this.includedFileScanner = null;
+            return ConfigFileScannerL3.hasNextLine( this );
+        }
+    }
 
+    /** <p>NOTE: This is a STATIC method.</p>
+     *  <p>NOTE: This is for internal-use only by {@link #hasNextLine()}.</p>
+     *  <p>Since this class can be (at any instant of time) be stepping thru the contents of an included-file, this _REUSABLE_ code is used to 1st invoke on {@link #includedFileScanner} before AGAIN invoking this code 'this'.</p>
+     *  <p>This method is made protected, in case sub-class would like to step thru the entries in {@link ConfigFileScanner#lines}.</p>
+     *  @return true or false
+     *  @throws java.io.FileNotFoundException If we encounter a 'include' built-in command and the filename passed as '@...' does Not exist.
+     *  @throws java.io.IOException If we encounter a 'include' built-in command and there is any trouble reding the included-file passed in as '@...'
+     *  @throws java.lang.Exception either this function throws or will return false.
+     */
+    protected static boolean hasNextLine( final ConfigFileScannerL3 __this ) throws java.io.FileNotFoundException, java.io.IOException, Exception
+    {   final String HDR = __this.getHDRPrefix() +": (STATIC)hasNextLine(): ";
+        if ( __this.verbose ) System.out.println( HDR +" has includedFileScanner? "+ (__this.includedFileScanner!=null) + " .. "+ __this.getRecursiveState() );
+
+        while ( ConfigFileScanner.hasNextLine( __this ) ) {
+            if ( __this.verbose ) System.out.println( HDR +" @ TOP OF WHILE LOOP: "+ ConfigFileScanner.getState( __this )  );
+            // we're going to keep iterating UNTIL we find a line that is __NOT__ a 'print' or 'include' line
+
+            final String nextLn = __this.peekNextLine();
+            if ( __this.verbose ) System.out.println( HDR +": PEEEKING.. '"+ nextLn +"'" );
+            assertTrue ( nextLn != null );
+
+            // Now let's ask the _SUBclasses_ if they've implemented the command in this line, as a built-in-command!
+            if ( __this.isBuiltInCommand( nextLn ) ) {
+                if ( __this.verbose ) System.out.println( HDR +"confirmed that isBuiltInCommand("+ nextLn +") is true. Quietly and transparently processing it." );
+                // we peeked (see 7 lines above).
+                // Now, we're 100% sure its a 'print' or 'include' line in the FILE.
+                __this.nextLine(); // let's go to the next-line and process that 'print' and 'include' commands.
+                // if ( __this.verbose ) new Debug(true).printAllProps( HDR, __this.propsSetRef );
+
+                assertTrue( __this.includedFileScanner == null );
+                final boolean retB = __this.execBuiltInCommand(); // it means that we hit a 'include @filename' or 'print ...' line in the batchfile.  So, we need to process-n-skip those lines :-( ugly code.
+                assertTrue( retB == true );
+
+                if ( __this.includedFileScanner == null ) {
+                    if ( __this.verbose ) System.out.println( HDR +"ABOUT to go to the next line in __this .. _ASSUMING_ _IF_ another line exists.. .." );
+                    continue; // go to next-line in __this
                 } else {
-                    final String nextLn = peekNextLine();
-                    if ( this.verbose ) System.out.println( HDR +": PEEEKING.. '"+ nextLn +"'" );
-                    assertTrue ( nextLn != null );
 
-                    if ( this.isBuiltInCommand( nextLn ) ) {
-                        if ( this.verbose ) System.out.println( HDR +"confirmed that isBuiltInCommand("+ nextLn +") is true. Quietly and transparently processing it." );
-                        // we peeked (see 4 lines above).
-                        // Now, we're 100% sure its a 'print' or 'include' line in the FILE.
-                        this.nextLine(); // let's go to the next-line and process that 'print' and 'include' commands.
-// if ( this.verbose ) System.out.println( HDR +"BEFORE execBuiltInCommand() is invoked.. s="+ s );
-// if ( this.verbose ) System.out.println( HDR +"currentLine After MacroEval="+ this.currentLineOrNull() );
-// if ( this.verbose ) new Debug(true).printAllProps( HDR +" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !! <<<<<<<<<<<<<<<<<<<<<<<<<<<< ", this.propsSetRef );
-                        final boolean retB = this.execBuiltInCommand(); // this means that we hit a 'include @filename' or 'print ...' line in the batchfile.  So, we need to process-n-skip those lines :-( ugly code.
-                        assertTrue( retB == true );
-
+                    // hmmmm.  the built-in command executed, was an 'include'
+                    if ( __this.verbose ) System.out.println( HDR +"Just executed an 'include' command "+ ConfigFileScanner.getState( __this ) );
+                    if ( __this.includedFileScanner.hasNextLine() ) {
+                        if ( __this.verbose ) System.out.println( HDR +"'included' file hasNextLine===TRUE! "+ ConfigFileScanner.getState( __this )  );
+                        return true;
                     } else {
-                        if ( this.verbose ) System.out.println( HDR +"NO!! NO!! NO!!  confirmed that isBuiltInCommand("+ nextLn +") is FALSE!!!" );
-                        return true; //we're inside the while-loop after passing the while-loop's conditional-expression: super.hasNextLine()
+                        // hmmmm.  The 'included' file is empty :-(
+                            if ( __this.verbose ) System.out.println( "Included file is empty!  Did you intend to have it be empty?  See within "+ ConfigFileScanner.getState( __this ) );
+                        __this.includedFileScanner = null; // it's empty, so let's not keep it around
+                        continue;
                     }
-                } // if-else
+                }
 
-                if ( this.verbose ) System.out.println( HDR +": BOTTOM of WHILE-Loop.. .." );
-            } // while-loop
+            } else {
+                if ( __this.verbose ) System.out.println( HDR +"NO!! NO!! NO!!  confirmed that isBuiltInCommand("+ nextLn +") is FALSE!!! "+ ConfigFileScanner.getState( __this ) );
+                return true; //we're inside the while-loop after passing the while-loop's conditional-expression: super.hasNextLine()
+            }
 
-            if ( this.verbose ) System.out.println( HDR +": returning FALSE!" );
-            return false; // if we ended the above while-loop, super.hasNextLine() is FALSE!
+            // if ( __this.verbose ) System.out.println( HDR +": BOTTOM of WHILE-Loop.. .." );
+        } // while-loop
 
-        // } catch (Exception e) {
-        //     e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
-        //     System.err.println( "\n\n"+ HDR + " Unexpected Internal ERROR @ " + this.getState() +"." );
-        //     System.exit(99); // This is a serious failure. Shouldn't be happening.
-        //     return false;
-        // }
+        if ( __this.verbose ) System.out.println( HDR +": returning FALSE!" );
+        return false; // if we ended the above while-loop, super.hasNextLine() is FALSE!
+
     }
 
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
+
+    /** This class aims to AUGMENTS java.util.Scanner's hasNextLine() and nextLine(), but needs to be used with CAUTION.
+     *  @return the next line or NULL
+     *  @throws IndexOutOfBoundsException if this method is NOT-PROPERLY called within a loop() based on the conditional: hasNextLine()
+     */
+    @Override
+    public String peekNextLine() throws IndexOutOfBoundsException
+    {   final String HDR = this.getHDRPrefix() +": hasNextLine(): ";
+        if ( this.verbose ) System.out.println( HDR +" @ Beginning: has includedFileScanner? "+ (this.includedFileScanner!=null) + " .. "+ this.getRecursiveState() );
+
+        final String peekedLine = ( this.includedFileScanner == null )
+                                        ? null
+                                        : this.includedFileScanner.peekNextLine();
+        if ( peekedLine != null ) {
+            return peekedLine;
+        } else {
+            return super.peekNextLine();
+        }
+    }
+
+    //===========================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //===========================================================================
 
     /** Thie method overrides the parent/super class method {@link ConfigFileScanner#nextLine()}
      *  @return for scripts that end in PRINT command, this returns null. Otherwise, Returns the next string in the list of lines.
@@ -546,18 +601,34 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
                 if ( this.verbose ) System.out.println( HDR +": I found the INCLUDE command: '"+ includeMatcher.group(1) +"' starting at index "+  includeMatcher.start() +" and ending at index "+ includeMatcher.end() );    
                 String includeFileName = includeMatcher.group(1); // line.substring( includeMatcher.start(), includeMatcher.end() );
                 if ( this.verbose ) System.out.println( HDR +"includeFileName='"+ includeFileName +"' and includeFileName.startsWith(?)="+ includeFileName.startsWith("?") +" includeFileName.substring(1)='"+ includeFileName.substring(1) + "'" );
+
                 final boolean bOkIfMissing = includeFileName.startsWith("?"); // that is, the script-file line was:- 'properties kwom=?fnwom'
                 includeFileName = includeFileName.startsWith("?") ? includeFileName.substring(1) : includeFileName; // remove the '?' prefix from key/lhs string
-                if ( this.verbose ) System.out.println( HDR +"includeFileName='"+ includeFileName );
+                if ( this.verbose ) System.out.println( HDR +"includeFileName='"+ includeFileName +"'" );
+
+                final String filenameWWOAt = includeFileName.startsWith("?") ? includeFileName.substring(1) : includeFileName; // remove the '?' prefix from file's name/path.
+                // 'WWOAt' === With-OR-Without-@-symbol ... as,  we're Not sure if there is an '@' prefix (to the file-name).
+
+                final String filename = filenameWWOAt.startsWith("@") ? filenameWWOAt.substring(1) : filenameWWOAt;
+
+                final File fileObj = new File ( filename );
+                if ( fileObj.exists() && fileObj.canRead() ) {
+                    if ( this.verbose ) System.out.println( HDR +"Filename=[" + fileObj.getAbsolutePath() +"] exists!" );
+                } else {
+                    if ( this.verbose ) System.out.println( HDR +"Filename=[" + fileObj.getAbsolutePath() +"] does __NOT__ exist !!!!" );
+                }
 
                 this.includedFileScanner = new ConfigFileScannerL3( this.verbose, this.propsSetRef );   // ConfigFileScannerL2 would instead invoke:- this.create()
                 try {
+                    if ( this.verbose ) System.out.println( HDR +"About to openFile(" + includeFileName +"] " );
                     final boolean success = this.includedFileScanner.openFile( includeFileName, this.ok2TrimWhiteSpace, this.bCompressWhiteSpace );
                     if ( ! success )
                         throw new Exception( "Unknown internal exception opening file: "+ includeFileName );
                 } catch ( java.io.FileNotFoundException fnfe) {
-                    if (  !   bOkIfMissing )
+                    if (  !   bOkIfMissing ) {
+                        if ( this.verbose ) System.out.println( HDR +"Filename=[" + fileObj.getAbsolutePath() +"] does __NOT__ exist !!!!\n"+ fnfe );
                         throw fnfe;
+                    }
                 }
                 if ( this.verbose ) System.out.println( HDR +"\t INCLUDED_File's contents:\n"+ this.includedFileScanner );
                 return true; // !!!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!! method returns here.
