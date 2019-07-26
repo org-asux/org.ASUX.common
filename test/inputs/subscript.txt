@@ -3,6 +3,7 @@ print -
 print Within subscript, evaluating macro ${ASUX::VAR1}\n
 echo print Subscript-last\n
 setProperty ?DidISetThisAlready=1stValue
+setProperty DidISetThisAlready=1stValue
 print DidISetThisAlready = ${ASUX::DidISetThisAlready} \n
 setProperty ?DidISetThisAlready=2ndValue
 print DidISetThisAlready = ${ASUX::DidISetThisAlready} \n   ### Note: the output of this PRINT should be __IDENTICAL__ to prior PRINT
