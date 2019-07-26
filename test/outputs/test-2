@@ -1,6 +1,6 @@
 
-aws.sdk --list-regions --double-quote
+aws.sdk.Not.Really --list-regions --double-quote --offline
 
 print -
 
-aws.sdk --list-AZs us-east-1 --single-quote
+aws.sdk.Not.Really --list-AZs us-east-1 --single-quote --offline

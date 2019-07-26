@@ -33,8 +33,11 @@ DidISetThisAlready = 1stValue
 	Echo: unknown command!!!!!!!!!!
 unknown command!!!!!!!!!!
 lastline-in-TOPMOST-scriptfile
-SomeClient java.io.FileNotFoundException: File: /tmp/no-such-file does Not exist.  See File-name: 'script.txt' @ line# 24 = [properties filename=/tmp/no-such-file]
-	at org.ASUX.common.ScriptFileScanner.execBuiltInCommand(ScriptFileScanner.java:281)
-	at org.ASUX.common.ConfigFileScannerL3.hasNextLine(ConfigFileScannerL3.java:380)
-	at org.ASUX.common.ScriptFileScanner.main(ScriptFileScanner.java:356)
-org.ASUX.common.ScriptFileScanner: main(): Unexpected Internal ERROR, while processing @script.txt]
+SomeClient
+java.io.FileNotFoundException: File: /tmp/no-such-file does Not exist.  See File-name: 'inputs/script.txt' @ line# 24 = [properties filename=/tmp/no-such-file]
+	at org.ASUX.common.ScriptFileScanner.execBuiltInCommand(ScriptFileScanner.java:335)
+	at org.ASUX.common.ConfigFileScannerL3.hasNextLine(ConfigFileScannerL3.java:401)
+	at org.ASUX.common.ConfigFileScannerL3.hasNextLine(ConfigFileScannerL3.java:367)
+	at org.ASUX.common.ScriptFileScanner.hasNextLine(ScriptFileScanner.java:181)
+	at org.ASUX.common.ScriptFileScanner.main(ScriptFileScanner.java:410)
+org.ASUX.common.ScriptFileScanner: main(): Unexpected Internal ERROR, while processing @inputs/script.txt]
