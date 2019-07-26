@@ -70,10 +70,6 @@ public class PropertiesFileScanner extends Properties  {
     private static final long serialVersionUID = 112L;
     public static final String CLASSNAME = PropertiesFileScanner.class.getName();
 
-    public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:;()%_/|+ -]+"; // NO Spaces
-    public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=\\s*['\"]?(.*)['\"]?\\s*$"; // allows for empty string ""
-    // public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=\\s*['\"]?("+ REGEXP_SIMPLEWORD +")['\"]?\\s*$";
-
     public boolean verbose;
 
     // ==============================================================================
@@ -126,6 +122,105 @@ public class PropertiesFileScanner extends Properties  {
     // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     // ==============================================================================
 
+    private static class PropsFileScannerIMPL extends OSScriptFileScanner {
+
+        private static final long serialVersionUID = 190L;
+        public static final String CLASSNAME = PropsFileScannerIMPL.class.getName();
+
+        public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:;()%_/|+ -]+"; // NO Spaces
+        public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=\\s*['\"]?(.*)['\"]?\\s*$"; // allows for empty string ""
+        // public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=\\s*['\"]?("+ REGEXP_SIMPLEWORD +")['\"]?\\s*$";
+
+        private final PropertiesFileScanner propsFile;
+        //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+        public PropsFileScannerIMPL( boolean _verbose, final PropertiesFileScanner _pfs ) {
+            super( _verbose );
+            this.propsFile = _pfs;
+        }
+
+        public PropsFileScannerIMPL( boolean _verbose, final PropertiesFileScanner _pfs, final LinkedHashMap<String,Properties> _propsSet ) {
+            super( _verbose, _propsSet );
+            assertTrue( _propsSet != null );
+            this.propsFile = _pfs;
+        }
+
+        protected PropsFileScannerIMPL create() {
+            return new PropsFileScannerIMPL( super.verbose, new PropertiesFileScanner(super.verbose),   super.propsSetRef );
+        }
+
+        //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+        /**
+         *  <p>This method is used to simply tell whether 'current-line' matches the REGEXP patterns that execBuiltInCommand() will be processing 'internally' within this class</p>
+         *  <p>In this class, those would be the REGEXP for 'print ...' and 'include @...'</p>
+         *  @param nextLn current line or 'peek-forward' line
+         *  @return true if the line will be processed 'internally'
+         */
+        @Override
+        protected boolean isBuiltInCommand( final String nextLn )
+        {   final String HDR = CLASSNAME +": isBuiltInCommand(): ";
+
+            if ( super.isBuiltInCommand(nextLn) )
+                return true;
+
+            if ( nextLn == null ) return false;
+            final String noprefix = removeEchoPrefix( nextLn );
+            if ( this.verbose ) System.out.println( HDR +"noprefix="+ noprefix );
+            final boolean retb = noprefix.matches( REGEXP_KVPAIR );
+            if ( this.verbose ) System.out.println( HDR +"retb="+ retb );
+            return retb;
+        }
+
+        //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+        /** <p>New Method added to this subclass.  Implement your command parsing and do as appropriate.</p>
+         *  <p>ATTENTION: Safely assume that any 'echo' prefix parsing and any 'print' parsing has happened already in a TRANSAPARENT way.</p>
+         *  <p>This method is automatically invoked _WITHIN_ nextLine().  nextLine() is inherited from the parent {@link org.ASUX.common.ConfigFileScannerL3}.</p>
+         *  @return true if all 'normal', and false IF-AND-ONLY-IF we hit a 'include @filename' line in the batchfile
+         *  @throws Exception This class does NOT.  But .. subclasses may have overridden this method and can throw exception(s).  Example: org.ASUX.yaml.BatchFileGrammer.java
+         */
+        @Override
+        protected boolean execBuiltInCommand() throws Exception
+        {
+            if ( super.execBuiltInCommand() )
+                return true; // Don't bother to do anything for lines that are auto-processed internally by super.class
+
+            final String HDR = CLASSNAME +": execBuiltInCommand(): ";
+            if ( this.verbose ) System.out.println( HDR + this.getState() );
+
+            try {
+
+                Pattern kvpairPattern = Pattern.compile( REGEXP_KVPAIR );
+                Matcher kvpairMatcher = kvpairPattern.matcher( super.currentLine() );
+                if (kvpairMatcher.find()) {
+                    if ( this.verbose ) System.out.println( HDR +"I found the text "+ kvpairMatcher.group() +" starting at index "+  kvpairMatcher.start() +" and ending at index "+ kvpairMatcher.end() );
+                    final String key = kvpairMatcher.group(1);
+                    final String val = kvpairMatcher.group(2);
+                    this.propsFile.setProperty( key, val );
+                    if ( this.verbose ) System.out.println( HDR +"Added KV-Pair: "+ key +" = "+ val );
+                    return true;
+                }
+                // else 
+                //      throw new Exception( HDR +"Not a valid KV-Pair @ line #"+ ix +" = '"+ line +"'" );
+
+            // This class did NOT process the current line
+            return false; // see javadoc for this method (and for super-class), as to why 'false'
+
+        } catch (PatternSyntaxException e) {
+			e.printStackTrace(System.err); // too serious an internal-error.  Immediate bug-fix required.  The application/Program will exit .. in 2nd line below.
+			System.err.println( HDR + ": Unexpected Internal ERROR, while checking for pattern ("+ REGEXP_ECHO +")." );
+			System.exit(91); // This is a serious failure. Shouldn't be happening.
+        }
+        // we shouldn't be getting here, due to 'System.exit()' within above catch()
+        return false; // This class did NOT process the current line
+    }
+    } // class
+
+    // ==============================================================================
+    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    // ==============================================================================
+
     /**
      *  <p>This is a unique ASUX.org enhancement to java.utill.Properties.<br>
      *      By passing in a "list/set" of Properties (whose lifecycle is managed elsewhere), you can benefit from "Macro-expressions" within the Properties file.</p>
@@ -138,24 +233,21 @@ public class PropertiesFileScanner extends Properties  {
     public void load( final Object _src, final LinkedHashMap<String,Properties> _allProps ) throws IllegalArgumentException, IOException
     {
         final String HDR = CLASSNAME + ": load(_src,<inStream>): ";
-        final Pattern printPattern = Pattern.compile( REGEXP_KVPAIR ); // Note: A line like 'print -' would FAIL to match \\S.*\\S
-        OSScriptFileScanner scanner = null;
+        // final Pattern printPattern = Pattern.compile( REGEXP_KVPAIR ); // Note: A line like 'print -' would FAIL to match \\S.*\\S
         try {
-            final Properties props = new Properties();
-            scanner = new OSScriptFileScanner( this.verbose, _allProps != null ? _allProps : OSScriptFileScanner.initProperties() ); // !!!! ATTENTION. I'm purposefully choosing a constructor that does __NOT__ pass on any set of Properties.
+            final PropsFileScannerIMPL scanner = new PropsFileScannerIMPL(
+                            this.verbose,
+                            this,
+                            _allProps != null ? _allProps : OSScriptFileScanner.initProperties()
+                            );
+
             scanner.useDelimiter( ";|"+System.lineSeparator() );
             scanner.openFile( _src, /* _ok2TrimWhiteSpace */ true, /* _bCompressWhiteSpace */ true );
             //---------------------------
             for ( int ix=1;   scanner.hasNextLine();   ix++ ) {
                 final String line = scanner.nextLine();
                 if ( this.verbose ) System.out.println( HDR +"line #"+ ix +"="+ line );
-                final Matcher matcher = printPattern.matcher( line );
-                if (  !  matcher.find() )
-                    throw new Exception( HDR +"Not a valid KV-Pair @ line #"+ ix +" = '"+ line +"'" );
-                final String key = matcher.group(1);
-                final String val = matcher.group(2);
-                this.setProperty( key, val );
-                if ( this.verbose ) System.out.println( HDR +"Added KV-Pair: "+ key +" = "+ val );
+                throw new Exception( "Not a valid KV-Pair "+ scanner.getState() +"'" );
             } // for loop
             if ( this.verbose ) System.out.println( HDR +"# of entries loaded into java.util.Properties = "+ this.size() );
             if ( this.verbose ) super.list( System.out );
