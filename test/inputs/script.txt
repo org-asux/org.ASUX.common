@@ -1,7 +1,7 @@
 print line-1\n
 echo print line-2\n
 echo print \n
-include @subscript-ScriptFileScanner.txt
+include @inputs/subscript-ScriptFileScanner.txt
 print \n
 print ${ASUX::foreach.iteration.value} before setProperty\n
 echo setProperty foreach.iteration.value=Wow-foreach.iteration.value-is-EVALUATED
@@ -13,13 +13,13 @@ print .
 print .
 echo print -
 setProperty VAR1=VALUE1
-include @subscript.txt
+include @inputs/subscript.txt
 sleep 2
 echo unknown command!!!!!!!!!!
 print lastline-in-TOPMOST-scriptfile\n
 
 properties file=/mnt/development/src/org.ASUX/AWS/CFN/myjobs/simple/Tags-MyMaster.properties
-print ${ASUX::Tag_Client}
+print ${ASUX::Tag_Client}\n  ### This macro-variable is defined in the above properties file.
 
 properties filename=/tmp/no-such-file
 
