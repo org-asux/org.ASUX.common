@@ -1,8 +1,9 @@
 VAR1=VALUE1
 include ?@NoSuchFile.txt	// Note the '?' Prefix to the filename.  It means if the file does NOT exist, don't barf.  Continue quietly instead.
-include @MySubProperties.txt
+include @inputs/MySubProperties.txt
 VAR11=ENDVALUE11
 VAR12=ENDVALUE12
-include @MySubProperties.txt
+include @inputs/MySubProperties.txt
+include @inputs/Empty.properties
 
 
