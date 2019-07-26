@@ -159,6 +159,60 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
     //     // do NOT EVER DO THIS here in this reset():--> this.propsSetRef.clear();
     // }
 
+    //===========================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //===========================================================================
+
+    private String getHDRPrefix() { return CLASSNAME + "("+ super.getFileName() +")"; }
+
+    //===========================================================================
+
+    /** This class aims to mimic java.util.Scanner's hasNextLine() and nextLine()
+     *  @return true or false
+     *  @throws java.io.FileNotFoundException If we encounter a 'include' built-in command and the filename passed as '@...' does Not exist.
+     *  @throws java.io.IOException If we encounter a 'include' built-in command and there is any trouble reding the included-file passed in as '@...'
+     *  @throws java.lang.Exception either this function throws or will return false.
+     */
+    @Override
+    public boolean hasNextLine() throws java.io.FileNotFoundException, java.io.IOException, Exception
+    {   final String HDR = this.getHDRPrefix() +": hasNextLine(): ";
+        if ( this.verbose ) System.out.println( HDR +" @ Beginning: "+ this.getRecursiveState() );
+
+        while ( super.hasNextLine() ) {
+            if ( this.verbose ) System.out.println( HDR +" @ TOP OF WHILE LOOP: "+ ConfigFileScanner.getState( this )  );
+            // we're going to keep iterating UNTIL we find a line that is __NOT__ a 'setProperty' or 'properties' or 'sleep' line
+
+            final String nextLn = super.peekNextLine();
+            if ( this.verbose ) System.out.println( HDR +": PEEEKING.. '"+ nextLn +"'" );
+            assertTrue ( nextLn != null );
+
+            // Now let's ask the _SUBclasses_ if they've implemented the command in this line, as a built-in-command!
+            if ( this.isBuiltInCommand( nextLn ) ) {
+                if ( this.verbose ) System.out.println( HDR +"confirmed that isBuiltInCommand("+ nextLn +") is true. Quietly and transparently processing it." );
+                // we peeked (see 7 lines above).
+                // Now, we're 100% sure its a 'setProperty' or 'properties' or 'sleep' line in the FILE.
+                this.nextLine(); // let's go to the next-line and process that 'setProperty' or 'properties' or 'sleep' command.
+                // if ( __this.verbose ) new Debug(true).printAllProps( HDR, __this.propsSetRef );
+
+                final boolean retB = this.execBuiltInCommand();
+                assertTrue( retB == true );
+
+                if ( this.verbose ) System.out.println( HDR +"ABOUT to go to the next line in __this .. _ASSUMING_ _IF_ another line exists.. .." );
+
+            } else {
+                if ( this.verbose ) System.out.println( HDR +"NO!! NO!! NO!!  confirmed that isBuiltInCommand("+ nextLn +") is FALSE!!! "+ ConfigFileScanner.getState( this ) );
+                return true; //we're inside the while-loop after passing the while-loop's conditional-expression: super.hasNextLine()
+            }
+
+            // if ( __this.verbose ) System.out.println( HDR +": BOTTOM of WHILE-Loop.. .." );
+        } // while-loop
+
+        if ( this.verbose ) System.out.println( HDR +": returning FALSE!" );
+        return false; // if we ended the above while-loop, super.hasNextLine() is FALSE!
+
+    }
+
+
     //==============================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //==============================================================================
@@ -258,10 +312,10 @@ assertTrue( false ); // Just to find out ..which code is using this constructor?
                 final String fnwom = Macros.evalThoroughly( this.verbose, val, this.propsSetRef ); // fwom === file-name-without-macros
 
                 final boolean bOkIfNotExists = fnwom.startsWith("?"); // that is, the script-file line was:- 'properties kwom=?fnwom'
-                final String filenameWOAt = fnwom.startsWith("?") ? fnwom.substring(1) : fnwom; // remove the '?' prefix from file's name/path.
-                // 'WOAt' === without-@-symbol ... as,  we're Not sure if there is an '@' prefix (to the file-name).
+                final String filenameWWOAt = fnwom.startsWith("?") ? fnwom.substring(1) : fnwom; // remove the '?' prefix from file's name/path.
+                // 'WWOAt' === With-OR-Without-@-symbol ... as,  we're Not sure if there is an '@' prefix (to the file-name).
 
-                final String filename = filenameWOAt.startsWith("@") ? filenameWOAt.substring(1) : filenameWOAt;
+                final String filename = filenameWWOAt.startsWith("@") ? filenameWWOAt.substring(1) : filenameWWOAt;
 
                 final Properties props = new Properties();
                 if ( this.verbose ) System.out.println( HDR +"Checking to see if filename=[" + filename +" exists.. .." );
