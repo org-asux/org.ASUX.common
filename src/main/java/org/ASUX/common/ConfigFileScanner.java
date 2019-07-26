@@ -79,6 +79,8 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     protected ArrayList<Integer> origLineNumbers; //  = new ArrayList<>();
 
     protected transient Iterator<String> iterator = null;  // <<- transient class variable.  Will not be part of deepClone() method.
+
+    /** ATTENTION: This is supposed to indicate line-numbers as humans see it (starting from 1 onwards).  _NOT_ as C-array-index! */
     protected int currentLineNum = -1;
 
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -209,7 +211,9 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     }
 
     /**
-     * Use this in conjunction with this.currentLine().    Line numbers start with 1, as all text-editors show.  If there is an error in the file being processed, the error-message will note the line#.
+     * <p>ATTENTION: Line numbers start with 1, as all text-editors show.<br>
+     *      If there is an error in the file being processed, the error-message will note the line#.</p>
+     * <p>Use this in conjunction with this.currentLine().</p>
      * @return the line # within the process that is 'current'.  It will be -1, if anything failed in 'reading in' the fileName.
      */
     public int getLineNum()  {
@@ -230,14 +234,36 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
      * @return something like: ConfigFile [@mapsBatch1.txt] @ line# 2 = [line contents as-is]
      */
     public String getState() {
-        if ( this.fileName == null || this.currentLineNum <= 0 )
-            return "ConfigFile ["+ this.getFileName() +"] is in invalid state";
+        return ConfigFileScanner.getState( this );
+        // if ( this.fileName == null || this.currentLineNum < 0 )
+        //     return "ConfigFile ["+ this.getFileName() +"] is in invalid state";
+        // else if ( this.currentLineNum == 0 )
+        //     return "ConfigFile ["+ this.getFileName() +"] has _JUST_ been Opened, and nextLine() has NOT YET been invoked";
+        // else {
+        //     final String s = "@ line# "+ this.origLineNumbers.get( this.currentLineNum - 1) +" = ["+ ConfigFileScanner.currentLineOrNull( this ) +"]";
+        //     if ( this.getFileName().startsWith("@") ) {
+        //         return "File-name: '"+ this.getFileName().substring(1) +"' "+ s;
+        //     } else {
+        //         return "inline-content/InputStream provided: '"+ this.getFileName() +"' "+ s;
+        //     }
+        // }
+    }
+
+    /**
+     *  In order to allow subclassses to invoke the IMPLEMENTATION of {@link #getState()}, as sub-classes like ConfigFileScannerL3 (for good reasons) override {@link #getState()}.
+     *  @return something like: ConfigFile [@mapsBatch1.txt] @ line# 2 = [line contents as-is]
+     */
+    public static String getState( final ConfigFileScanner __this ) {
+        if ( __this.fileName == null || __this.currentLineNum < 0 )
+            return "ConfigFile ["+ __this.getFileName() +"] is in invalid state";
+        else if ( __this.currentLineNum == 0 )
+            return "ConfigFile ["+ __this.getFileName() +"] has _JUST_ been Opened, and nextLine() has NOT YET been invoked";
         else {
-            final String s = "@ line# "+ this.origLineNumbers.get( this.currentLineNum - 1) +" = ["+ ConfigFileScanner.currentLineOrNull( this ) +"]";
-            if ( this.getFileName().startsWith("@") ) {
-                return "File-name: '"+ this.getFileName().substring(1) +"' "+ s;
+            final String s = "@ line# "+ __this.origLineNumbers.get( __this.currentLineNum - 1) +" = ["+ ConfigFileScanner.currentLineOrNull( __this ) +"]";
+            if ( __this.getFileName().startsWith("@") ) {
+                return "File-name: '"+ __this.getFileName().substring(1) +"' "+ s;
             } else {
-                return "inline-content/InputStream provided: '"+ this.getFileName() +"' "+ s;
+                return "inline-content/InputStream provided: '"+ __this.getFileName() +"' "+ s;
             }
         }
     }
@@ -451,7 +477,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
             //---------------------------
             scanner.close();
-            this.rewind(); // rewing the pointer to the 1st line in the batch file.
+            this.rewind(); // rewind the pointer to the 1st line in the batch file.
             return true;
 
         // scanner.hasNext() only throws a RUNTIMEEXCEPTION: IllegalStateException - if this scanner is closed
