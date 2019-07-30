@@ -320,7 +320,7 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
 
     /**
      * This is a debugging tool, to help determine the 'Russian-Doll' situation, when Config-file includes another, which include yet-another, .. .. ..
-     * @return something like: ConfigFile [@mapsBatch1.txt] @ line# 2 = [line contents as-is] .. .. --> .. .. <Repeat> 
+     * @return something like: ConfigFile [@mapsBatch1.txt] @ line# 2 = [line contents as-is] .. .. --&lt; .. .. &lt;Repeat&gt;
      */
     protected String getRecursiveState() {
         if ( this.includedFileScanner == null )
@@ -372,6 +372,7 @@ public class ConfigFileScannerL3 extends ConfigFileScanner {
      *  <p>NOTE: This is for internal-use only by {@link #hasNextLine()}.</p>
      *  <p>Since this class can be (at any instant of time) be stepping thru the contents of an included-file, this _REUSABLE_ code is used to 1st invoke on {@link #includedFileScanner} before AGAIN invoking this code 'this'.</p>
      *  <p>This method is made protected, in case sub-class would like to step thru the entries in {@link ConfigFileScanner#lines}.</p>
+     *  @param __this since this is a static method, pass in 'this' (or ANY of the subclasses)
      *  @return true or false
      *  @throws java.io.FileNotFoundException If we encounter a 'include' built-in command and the filename passed as '@...' does Not exist.
      *  @throws java.io.IOException If we encounter a 'include' built-in command and there is any trouble reding the included-file passed in as '@...'
