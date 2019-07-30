@@ -251,6 +251,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
 
     /**
      *  In order to allow subclassses to invoke the IMPLEMENTATION of {@link #getState()}, as sub-classes like ConfigFileScannerL3 (for good reasons) override {@link #getState()}.
+     *  @param __this since this is a static method, pass in 'this' (or ANY of the subclasses)
      *  @return something like: ConfigFile [@mapsBatch1.txt] @ line# 2 = [line contents as-is]
      */
     public static String getState( final ConfigFileScanner __this ) {
@@ -304,7 +305,7 @@ public abstract class ConfigFileScanner implements java.io.Serializable {
     /**
      *  <p>This method exists primarily to allow this class to invoke hasNextLine() (especially for getState()).. without invoking sub-class' overridden version.</p>
      *  <p>Turns out I need to explicitly call this-specifc method - from within subclasses.  So, you can do that as: ConfigFileScanner.hasNextLine( this );
-     *  @param __this since this is a static method, pass in 'this' (within the subclasses)
+     *  @param __this since this is a static method, pass in 'this' (or ANY of the subclasses)
      * @return see {@link #hasNextLine()}
      */
     public static final boolean hasNextLine( final ConfigFileScanner __this )
