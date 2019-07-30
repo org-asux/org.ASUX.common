@@ -70,11 +70,11 @@
         <!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
 
 	<dependencies>
+        <!-- JUNIT5 junit5 -->
         <dependency>
-            <!-- scope>test</scope -->
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            </dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli -->
         <dependency>
             <groupId>commons-cli</groupId>
