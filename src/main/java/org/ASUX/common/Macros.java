@@ -201,9 +201,9 @@ public class Macros {
         final String HDR = CLASSNAME +": evalThoroughly(verbose,_s="+ _s +",Single-Props-file): ";
 		String retStr = _s;
 		try {
-			Pattern macroPatt = Macros.getPattern( _verbose );
+			// Pattern macroPatt = Macros.getPattern( _verbose );
 			do {
-				final String prev = retStr;
+				final String prev = retStr; // guaranteed to be NotNull
 				assertTrue( prev != null );
 				if ( _verbose ) System.out.println( HDR + "starting iteration with "+ prev );
 
@@ -211,15 +211,19 @@ public class Macros {
 				if ( _verbose ) System.out.println( HDR + " prev="+ prev +" --> retStr="+ retStr );
 
 				// Now, check whether we need to 'rinse+repeat' the above "Macros.eval" above, until no further change happens
-				Matcher matcher = macroPatt.matcher( retStr );
-				if ( matcher.matches() ) { // means, we still have ${ASUX::___} still left (perhaps nested expressions, so we need multiple passes)
-					if ( _verbose ) System.out.println( HDR + " retStr="+ retStr +" still has a MACRO Pattern left in it." );
-					if ( prev.equals( retStr) ) {
-						// clearly.. the ${ASUX::__} still left WILL NEVER get resolved.
-						// if we do NOT quit this do-while loop, we'll be stuck in an infinite loop
-						return retStr; // !!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!! method returns here
-					}
-				} // if matcher.matches()
+				if ( prev.equals( retStr) ) {
+					// clearly..  if we do NOT quit this do-while loop, we'll be stuck in an infinite loop
+					return retStr; // !!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!! method returns here
+				}
+				// Matcher matcher = macroPatt.matcher( retStr );
+				// if ( matcher.matches() ) { // means, we still have ${ASUX::___} still left (perhaps nested expressions, so we need multiple passes)
+				// 	if ( _verbose ) System.out.println( HDR + " retStr="+ retStr +" still has a MACRO Pattern left in it." );
+				// 	if ( prev.equals( retStr) ) {
+				// 		// clearly.. the ${ASUX::__} still left WILL NEVER get resolved.
+				// 		// if we do NOT quit this do-while loop, we'll be stuck in an infinite loop
+				// 		return retStr; // !!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!! method returns here
+				// 	}
+				// } // if matcher.matches()
 				if ( _verbose ) System.out.println( HDR + "ENDED iteration with "+ retStr );
 			} while (true);
 		} catch ( Exception e ) {
@@ -253,9 +257,9 @@ public class Macros {
         final String HDR = CLASSNAME +": evalThoroughly(verbose,_s="+ _s +",_propsSet): ";
 		String retStr = _s;
 		try {
-			final Pattern macroPattern = Macros.getPattern( _verbose );
+			// final Pattern macroPattern = Macros.getPattern( _verbose );
 			do {
-				final String prev = retStr;
+				final String prev = retStr; // guaranteed to be NotNull
 				assertTrue( prev != null );
 				if ( _verbose ) System.out.println( HDR + "starting iteration with "+ prev );
 
@@ -270,19 +274,24 @@ public class Macros {
 				if ( _verbose ) System.out.println( HDR + " prev="+ prev +" --> retStr="+ retStr );
 
 				// Now, check whether we need to 'rinse+repeat' the "inner DO-WHILE-LOOP" above, until no further change happens
-				Matcher matcher = macroPattern.matcher( retStr );
-				if (  !   matcher.matches() ) { // WHETHER we still have ${ASUX::___} still left (perhaps nested expressions, so we need multiple passes)
-					return retStr;
-				} else {
-					if ( _verbose ) System.out.println( HDR + " retStr="+ retStr +" still has a MACRO Pattern left in it." );
-					if ( prev.equals( retStr) ) {
-						// clearly.. the ${ASUX::__} still left WILL NEVER get resolved.
-						// if we do NOT quit this do-while loop, we'll be stuck in an infinite loop
-						return retStr; // !!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!! method returns here
-					}
-					// else continue this do-while() loop
-					if ( _verbose ) System.out.println( HDR + "ENDED iteration with "+ retStr );
-				} // if matcher.matches()
+				if ( prev.equals( retStr) ) {
+					// clearly..  if we do NOT quit this do-while loop, we'll be stuck in an infinite loop
+					return retStr; // !!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!! method returns here
+				}
+				// Matcher matcher = macroPattern.matcher( retStr );
+				// if (  !   matcher.matches() ) { // WHETHER we still have ${ASUX::___} still left (perhaps nested expressions, so we need multiple passes)
+				// 	return retStr;
+				// } else {
+				// 	if ( _verbose ) System.out.println( HDR + " retStr="+ retStr +" still has a MACRO Pattern left in it." );
+				// 	if ( prev.equals( retStr) ) {
+				// 		// clearly.. the ${ASUX::__} still left WILL NEVER get resolved.
+				// 		// if we do NOT quit this do-while loop, we'll be stuck in an infinite loop
+				// 		return retStr; // !!!!!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!!!! method returns here
+				// 	}
+				// 	// else continue this do-while() loop
+				// 	if ( _verbose ) System.out.println( HDR + "ENDED iteration with "+ retStr );
+				// } // if matcher.matches()
+				if ( _verbose ) System.out.println( HDR + "ENDED iteration with "+ retStr );
 			} while (true);
 		} catch ( Exception e ) {
 			if ( _verbose ) e.printStackTrace(System.err);
