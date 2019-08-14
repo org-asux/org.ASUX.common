@@ -127,7 +127,7 @@ public class PropertiesFileScanner extends Properties  {
         private static final long serialVersionUID = 190L;
         public static final String CLASSNAME = PropsFileScannerIMPL.class.getName();
 
-        public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z0-9\\.,:;()%_/|+ -]+"; // NO Spaces
+        public static final String REGEXP_SIMPLEWORD = "[${}@%a-zA-Z\\p{L}0-9\\.,:;()%_/|+ -]+"; // NO Spaces
         public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=\\s*['\"]?(.*)['\"]?\\s*$"; // allows for empty string ""
         // public static final String REGEXP_KVPAIR = "^\\s*("+ REGEXP_SIMPLEWORD +")=\\s*['\"]?("+ REGEXP_SIMPLEWORD +")['\"]?\\s*$";
 
