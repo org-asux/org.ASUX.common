@@ -4,6 +4,6 @@ include @inputs/MySubProperties.txt
 VAR11=ENDVALUE11
 VAR12=ENDVALUE12
 include @inputs/MySubProperties.txt
-include @inputs/Empty.properties
+include @inputs/empty.properties
 
 
