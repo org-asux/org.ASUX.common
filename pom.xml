@@ -12,7 +12,7 @@
 
     <inceptionYear>2019</inceptionYear>
     <description>common JAVA interfaces, abstract classes and utility classes for use broadly across ASUX.org projects as well as anyone else interested.</description>
-	<url>https://github.com/seetamraju/org.ASUX.common</url>
+	<url>https://github.com/org-asux/org.ASUX.common</url>
 
 	<parent>
 		<groupId>org.asux</groupId>
