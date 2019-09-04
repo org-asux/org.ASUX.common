@@ -231,19 +231,63 @@ public final class Inet
 		}
 	}
 
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
+
+	/**
+	 * 
+	 * @param _portnum must be one of 22, 80, 443, 8080, 1194, 1433, 1521, 3306, 5432, 5439 (as of now)
+	 * @return a NotNull __LOWERCASE__ only string
+	 * @throws Exception if _portnum is NOT among the values listed above,  or .. is invalid.
+	 */
+	public String getNameForPortNumber( final int _portnum ) throws Exception {
+		if (_portnum == 22) return "ssh";
+		if (_portnum == 80) return "http";
+		if (_portnum == 443) return "https";
+		if (_portnum == 8080) return "https";
+		if (_portnum == 1194) return "openvpn-udp";
+		if (_portnum == 1433) return "oracle";
+		if (_portnum == 1521) return "ms-sql";
+		if (_portnum == 3306) return "mysql";
+		if (_portnum == 5432) return "postgres";
+		if (_portnum == 5439) return "redshift";
+
+		final String s = "Unknown port-# '"+ _portnum +"'";
+		throw new Exception( s );
+	}
 
     //=================================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //=================================================================================
 
-	public String getNameForPortNumber( final int _portnum ) {
-		if (_portnum == 22) return "ssh";
-		if (_portnum == 80) return "http";
-		if (_portnum == 443) return "https";
-		if (_portnum == 8080) return "https";
-		else return null;
+	/**
+	 *  Converts '22' into 'ssh', '443' into https, etc.. for a few well known labels/names for ports
+	 *  @param _portName NotNull __LOWERCASE__ only string, with values ssh, http, https, openvpn-udp , oracle, ms-sql, mysql, postgres, redshift (only these values currently).<br>WARNING!!!! If the input is ALL Numeric-Positive-Integer, it will be simply returned AS-IS!!
+	 *  @return a valid integer or else throws exception if _portName is unknown (which could include "invalid")<br>WARNING!!!! If the input is ALL Numeric-Positive-Integer, it will be simply returned AS-IS!!
+	 *  @throws Exception if _portName is NOT among the values listed above,  or .. is invalid.
+	 */
+	public int getPortFromName( final String _portName ) throws Exception {
+		final String s = "Unknown port-name '"+ _portName +"'";
+		if ( _portName == null ) throw new Exception( s );
+
+		if ("ssh".equals(_portName)) return 22;
+		if ("http".equals(_portName)) return 80;
+		if ("https".equals(_portName)) return 443;
+		if ("openvpn-udp".equals(_portName)) return 1194;
+		if ("oracle".equals(_portName)) return 1433;
+		if ("ms-sql".equals(_portName)) return 1521;
+		if ("mysql".equals(_portName)) return 3306;
+		if ("postgres".equals(_portName)) return 5432;
+		if ("redshift".equals(_portName)) return 5439;
+
+		// in case the input is numeric.. just simply return it back!
+		if ( _portName.matches("^\\s*[0-9]+\\s*$") ) return Integer.parseInt( _portName ); // THis line of code .. should NOT THROW!!!
+
+		throw new Exception( s );
 	}
-    //=================================================================================
+
+	//=================================================================================
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     //=================================================================================
 
