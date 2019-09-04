@@ -44,7 +44,11 @@ import java.util.Set;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Files;
@@ -70,7 +74,7 @@ public class IOUtils {
      */
     public static void checkIfFileSecure( final boolean _verbose, final String _filePathStr ) throws SecurityException, IOException
     {
-        final String HDR = CLASSNAME + ": AWSCmdline(): ";
+        // final String HDR = CLASSNAME + ": AWSCmdline(): ";
         // final String errmsg = CLASSNAME + ": deepClone(): ERROR deepCloning object of type "+ _orig.getClass().getName() +" of value=["+ ((_orig==null)?"null":_orig.toString()) +"]";
         try {
             final Path filePath = FileSystems.getDefault().getPath( _filePathStr );
@@ -107,7 +111,7 @@ public class IOUtils {
             final boolean readable, final boolean writeable, final boolean executable,
             final boolean ownerOnly ) throws SecurityException
     {
-        final String HDR = CLASSNAME + ": AWSCmdline(): ";
+        // final String HDR = CLASSNAME + ": AWSCmdline(): ";
         // final String errmsg = CLASSNAME + ": deepClone(): ERROR deepCloning object of type "+ _orig.getClass().getName() +" of value=["+ ((_orig==null)?"null":_orig.toString()) +"]";
 
         try {
@@ -158,7 +162,38 @@ public class IOUtils {
             // if ( this.verbose ) ipe.printStackTrace( System.err );
             // if ( this.verbose ) System.err.println( "\n\n"+ HDR +"Serious internal error: Why would the Path be invalid?" );
             ipe.printStackTrace( System.err );
-            System.err.println( "\n\n"+ HDR +"!!SERIOUS INTERNAL ERROR!! Why would the Path '"+ filename +"' be invalid?\n\n" );
+            System.err.println( "\n\n"+ HDR +"!!SERIOUS INTERNAL ERROR!! The Path '"+ filename +"' is invalid !!\n\n" );
+            throw ipe;
+        }
+    }
+
+    //=================================================================================
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //=================================================================================
+
+    /**
+     * Given a filename and a Properties object, just simply write the properties to file, catch some important exceptions and dump to stderr, and still throw a simple Exception.
+     * @param filename a NotNull path to a file
+     * @param _props a NotNull reference
+     * @throws Exception any errors, whether invalid filename, unable to write to file, etc. ..
+     */
+    public static void write2File( final String filename, final Properties _props) throws Exception
+    {
+        final String HDR = CLASSNAME + ": write2File("+ filename +","+_props+"): ";
+        try {
+            final StringWriter stkTrace = new StringWriter();
+            new Throwable("FYI: This file created by the following code.").printStackTrace( new PrintWriter( stkTrace ) );
+            final FileWriter writer = new FileWriter( java.nio.file.Paths.get( filename ).toAbsolutePath().toString() );
+            _props.store( writer, "Created: "+ new java.util.Date() +"\n"+ stkTrace.toString() +"\n" );
+            // System.out.println( "File "+ filename +" created." );
+        // } catch(IOException ioe) {
+        // } catch(IllegalArgumentException ioe) { // thrown by java.nio.file.Paths.get()
+        // } catch(FileSystemNotFoundException ioe) { // thrown by java.nio.file.Paths.get()
+        } catch(java.nio.file.InvalidPathException ipe) {
+            // if ( this.verbose ) ipe.printStackTrace( System.err );
+            // if ( this.verbose ) System.err.println( "\n\n"+ HDR +"Serious internal error: Why would the Path be invalid?" );
+            ipe.printStackTrace( System.err );
+            System.err.println( "\n\n"+ HDR +"!!SERIOUS INTERNAL ERROR!! The Path '"+ filename +"' is invalid !!\n\n" );
             throw ipe;
         }
     }
