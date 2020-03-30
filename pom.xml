@@ -9,6 +9,8 @@
     
     <version>1.2</version>
 	<packaging>jar</packaging>
+	<!-- v1.2 Major stable well-tested release. No changes to code or to tests, since Q3 2019. -->
+	<!-- v1.1 2nd release into Maven Central Repository   -->
 
     <inceptionYear>2019</inceptionYear>
     <description>common JAVA interfaces, abstract classes and utility classes for use broadly across ASUX.org projects as well as anyone else interested.</description>
@@ -17,7 +19,7 @@
 	<parent>
 		<groupId>org.asux</groupId>
 		<artifactId>TopLevelPOM</artifactId>
-		<version>1.2</version>
+		<version>1.2.2</version>
 		<relativePath>../pom-TopLevelParent.xml</relativePath>
 		<!-- EVEN tho' PARENT-POM is in .M2 REPOSITORY... I'm forced to use RELATIVEPATH.  The reason?  The following MAVEN output -->
 <!--
