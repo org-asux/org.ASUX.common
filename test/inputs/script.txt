@@ -18,7 +18,7 @@ sleep 2
 echo unknown command!!!!!!!!!!
 print lastline-in-TOPMOST-scriptfile\n
 
-properties file=/mnt/development/src/org.ASUX/AWS/CFN/test/myjobs/simple/Tags-MyMaster.properties
+properties file=/Users/development/src/org.ASUX/AWS/CFN/test/myjobs/simple/Tags-MyMaster.properties
 print ${ASUX::Tag_Client}\n  ### This macro-variable is defined in the above properties file.
 
 properties filename=/tmp/no-such-file
